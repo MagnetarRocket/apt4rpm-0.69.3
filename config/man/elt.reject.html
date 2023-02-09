@@ -1,0 +1,15 @@
+<p>The reject tag is used to filter rpms on their full name (including path)
+ to exclude them from the apt repository.  
+ The filter has been constructed with <i>grep -vE</i>.  The regular expressions
+ that apply for grep can be used here as well.
+</p>
+<p>In case one would like to reject rpms of the i686 architecture and release
+ 2.2 one can make the following rule:<br>
+ &lt;reject>2.2.*i686&lt;/reject>.  Which will actually result in
+ <i>grep -vE "2.2.*i686"</i><br>
+ A similar result can be obtained by using 2 reject tags:<br>
+ &lt;reject>2.2&lt;/reject> and<br>
+ &lt;reject>i686&lt;/reject><br>
+ This will result in
+ <i>grep -vE "2.2|i686"</i>.<br>
+</p>

@@ -1,0 +1,11 @@
+      a.index {font-weight: bold}
+      hr {text-align: center}
+      table.synopsis {background-color: #DCDCDC}
+      td.title {font-style: italic}
+body {
+ color: #100C08;
+ background: white;
+ font-family: sans-serif;
+ font-size: large;
+}
+

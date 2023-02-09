@@ -1,0 +1,202 @@
+#!/bin/sh
+##################################################################
+#
+# Copyright (C) 2002 M Ritter
+#
+# File:           $RCSfile: aptrpm-2,v $
+# Revision:       $Revision: 1.2 $
+# Last change:    $Date: 2002/11/25 04:30:59 $
+# Last change by: $Author: corsepiu $
+#
+# Send suggestions to: apt4rpm-devel@lists.sourceforge.net
+# Homepage: http://apt4rpm.sourceforge.net
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# For a copy of the GNU General Public License, visit
+# http://www.gnu.org or write to the Free Software Foundation, Inc.,
+# 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+##################################################################
+
+DEBUG=${DEBUG:=0}
+RUNLEVEL=$(/sbin/runlevel | cut -c3)
+
+PRE_LIST=""
+POST_LIST=""
+
+PRE_CMD=""
+POST_CMD=""
+
+#
+# the following scripts may cause confusion while
+# update is running
+#
+DONOTRESTART=" network route"
+SPECIALGUEST=" $DONOTRESTART nis portmap rpc autofs autofs4 "
+
+function debug_echo() {
+#######################
+  if [ $DEBUG -ge 1 ]; then
+    echo "$@" 1>&2
+  fi
+}
+
+
+function get_etcinit_stop() {
+#############################
+  (for f in "$@"; do
+    rpm -ql $f | grep ^/etc/init.d/ 
+  done) | sort | uniq
+}
+
+
+function get_etcinit_stop_rpm() {
+#################################
+  PACKAGE_NAMES=$(rpm -qp --obsoletes "$@"; rpm -qp --queryformat "%{RPMTAG_NAME}\n" "$@" )
+  debug_echo "Package names: " $PACKAGE_NAMES
+  (for f in $PACKAGE_NAMES; do
+    rpm -ql $f 2> /dev/null | grep ^/etc/init.d/ 
+  done) | sort | uniq
+}
+
+
+function get_etcinit_start_rpm() {
+##################################
+  (for f in "$@"; do
+    rpm -qlp $f | grep ^/etc/init.d/
+  done) | sort | uniq
+}
+
+
+function check_services() {
+##########################
+  debug_echo "check_services()"
+  local DELAY=0
+
+  for FILENAME in "$@"; do
+    BASENAME=${FILENAME##*/}
+    if [ ! -z $FILENAME ]; then
+      STARTFILE="/etc/init.d/rc$RUNLEVEL.d/S[0-9][0-9]${FILENAME##*/}"
+      STARTFILE=$(ls $STARTFILE 2>/dev/null)
+      STOPFILE="/etc/init.d/rc$RUNLEVEL.d/K[0-9][0-9]${FILENAME##*/}"
+      STOPFILE=$(ls $STOPFILE 2>/dev/null)
+
+      if [ -z "$STOPFILE" -o -z "$STARTFILE" ]; then
+        echo "Start/Stop $BASENAME Not found"; 
+      else
+        debug_echo "Checking for: $STARTFILE $BASENAME"
+
+        # some scripts need extra handling
+        if echo "$SPECIALGUEST" | grep -q " $BASENAME "; then
+	  debug_echo "We have a special guest: $FILENAME"
+          if ! echo "$DONOTRESTART" | grep -q " $BASENAME "; then
+            POST_CMD="$POST_CMD
+		    $STARTFILE restart"
+            debug_echo "Restarting after update: $BASENAME"
+          else
+            debug_echo "Skipping stop/start: $BASENAME"
+          fi
+        else
+          if [ ! -d $FILENAME -a -f $STARTFILE ]; then
+            PRE_CMD="$PRE_CMD
+		     $STOPFILE stop"
+          fi
+          if [ ! -d $FILENAME -a -f $STOPFILE ]; then
+            POST_CMD="$POST_CMD
+		      $STARTFILE start"
+          fi
+        fi
+      fi
+
+    fi
+  done
+}
+
+
+RPM_LIST=""
+
+debug_echo "Runlevel: $RUNLEVEL"
+
+for par in "$@"; do
+  case "$par" in
+    --*)  debug_echo "Long option '$par' ignored"
+	;;
+    -*i*) debug_echo "Mode: Install '$par' ok"
+	MODE="I"
+        ;;
+    -*e*) debug_echo "Mode: Remove '$par' ok"
+	MODE="E"
+        ;;
+    -*U*) debug_echo "Mode: Update '$par' ok"
+	MODE="U"
+        ;;
+    -*)	debug_echo "Unknown short option '$par' ignored"
+        ;;
+    *)  debug_echo "Filename '$par' ok"
+	RPM_LIST="$RPM_LIST $par"
+        ;;
+  esac
+done
+
+debug_echo "List of packages: $RPM_LIST"
+
+case $MODE in
+  U*)
+	PRE_LIST=$(get_etcinit_stop_rpm $RPM_LIST)
+	check_services $PRE_LIST
+	eval "$PRE_CMD"
+	debug_echo "PRE_LIST: $PRE_LIST"
+	debug_echo "PRE_CMD: $PRE_CMD"
+	/bin/rpm -qlp "$RPM_LIST" >> /tmp/trip/changedfiles
+	/bin/rpm "$@"
+	echo "RPM returned $?"
+	POST_LIST=$(get_etcinit_start_rpm $RPM_LIST)
+	debug_echo "POST_LIST: $POST_LIST"
+	debug_echo "POST_CMD: $POST_CMD"
+	eval "$POST_CMD"
+	;;
+  I*)
+	/bin/rpm -qlp "$RPM_LIST" >> /tmp/trip/changedfiles
+	/bin/rpm "$@"
+	echo "RPM returned $?"
+	POST_LIST=$(get_etcinit_start_rpm $RPM_LIST)
+	debug_echo "POST_CMD: $POST_CMD"
+	eval "$POST_CMD"
+	;;
+  E*)
+	PRE_LIST=$(get_etcinit_stop $RPM_LIST)
+	debug_echo "PRE_CMD: $PRE_CMD"
+	eval "$PRE_CMD"
+	/bin/rpm -qlp "$RPM_LIST" >> /tmp/trip/changedfiles
+	/bin/rpm "$@" && echo "RPM returned $?"
+	;;
+esac
+
+# DATE=$(date|sed -e s+[[:space:]]+_+g -e s+:+_+g)
+DATE=$(date "+%Y%m%d%H%M%S")
+
+echo "
+
+<!-- ===================================== -->
+
+  <APT_CALL>
+
+    <DATE>$DATE</DATE>
+
+    <PRE>$PRE_CMD</PRE>
+
+    <RPM>/bin/rpm $@</RPM>
+
+    <POST>$POST_CMD</POST>
+
+  </APT_CALL>
+" >> /var/log/aptrpm.log

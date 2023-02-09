@@ -1,0 +1,16 @@
+package Aptate::Version;
+
+use strict;
+
+use vars qw(@ISA @EXPORT);
+
+@ISA = qw(Exporter);
+@EXPORT = qw ($VERSION $PACKAGE $BUGS);
+
+use vars qw ($VERSION $PACKAGE $BUGS);
+
+$PACKAGE = 'apt4rpm';
+$VERSION = '@PACKAGE_VERSION@';
+$BUGS = '@PACKAGE_BUGREPORT@';
+
+1;;

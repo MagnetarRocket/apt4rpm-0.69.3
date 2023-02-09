@@ -1,0 +1,233 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
+<html xmlns='http://www.w3.org/1999/xhtml'>
+
+  <head>
+    <meta http-equiv='Content-Type' content='text/html; charset=ISO-8859-1' />
+    <meta name='generator' content='dtd2html 0.41 (Perl 5.008005)' />
+    
+    <title>Example aptate.xml</title>
+    
+    <link href='style.css' rel='stylesheet' type='text/css'/>
+    
+    
+    <link rel='Prev' href='dtd-manual.book.examples_list.html'/>
+    
+    
+    <link rel='Next' href='dtd-manual.ex.aptate.conf.html'/>
+    
+  </head>
+
+  <body>
+    <div class='navheader'>
+      <table summary='Header navigation table' width='100%' border='0' cellpadding='0' cellspacing='0'>
+        <colgroup><col width='20%'/><col width='60%'/><col width='20%'/></colgroup>
+        <tr>
+          <th colspan='3' align='center'>aptate configuration manual</th>
+        </tr>
+        <tr valign='bottom'>
+          <td align='left'>
+            
+              <a href='dtd-manual.book.examples_list.html' accesskey='P'><img src='prev.png' alt='Previous' border='0'/></a>
+            
+          </td>
+          <td align='center'>&nbsp;</td>
+          <td align='right'>
+            
+              <a href='dtd-manual.ex.aptate.conf.html' accesskey='N'><img src='next.png' alt='Next' border='0'/></a>
+            
+          </td>
+        </tr>
+      </table>
+      <hr />
+    </div>
+
+
+<h1>Example aptate.xml</h1>
+<pre>
+&lt;?xml version=&apos;1.0&apos; encoding=&quot;iso-8859-1&quot;?&gt;
+&lt;!DOCTYPE opt SYSTEM &quot;aptate.dtd&quot;&gt;
+
+<em>&lt;!--
+   This is an example aptate configuration file.  It shows most of aptate&apos;s
+   elements and element attributes.  A nice way to create this file is by
+   using xemacs in pgsml mode.  Xemacs in this mode will be of great help,
+   as it gives you a gui to make this configuration file.  Make sure though
+   that the filename ends at &quot;.xml&quot;!
+
+   All possibilities are described in the manual, that can be found at:
+   file:///usr/share/doc/packages/apt4rpm/dtd-manual/dtd-manual.book.home.html
+--&gt;</em>
+
+&lt;<a href='dtd-manual.elt.opt.html'>opt</a>
+  security-component=&quot;yes&quot;
+  update-rpms=&apos;yes&apos;
+&gt;
+
+  <em>&lt;!-- all files are relative to this path --&gt;</em>
+  &lt;<a href='dtd-manual.elt.topdir.html'>topdir</a>&gt;/dist/okna2002&lt;/topdir&gt;
+
+  <em>&lt;!-- Information used to sign the apt repository --&gt;</em>
+  &lt;<a href='dtd-manual.elt.authorization.html'>authorization</a>&gt;
+    &lt;<a href='dtd-manual.elt.name.html'>name</a>&gt;joe&lt;/name&gt;
+    &lt;<a href='dtd-manual.elt.email.html'>email</a>&gt;joe@users.sourceforge.net&lt;/email&gt;
+  &lt;/authorization&gt;
+
+  <em>&lt;!-- It&apos;s not required to specify the protocol --&gt;</em>
+  &lt;<a href='dtd-manual.elt.sources-list-file.html'>sources-list-file</a>&gt;/dist/okna2002/apt&lt;/sources-list-file&gt;
+  &lt;<a href='dtd-manual.elt.sources-list-ftp.html'>sources-list-ftp</a>&gt;/gw/suse/suse-8.1/apt/&lt;/sources-list-ftp&gt;
+  &lt;<a href='dtd-manual.elt.sources-list-http.html'>sources-list-http</a>&gt;http://www.okna.rm/apt&lt;/sources-list-http&gt;
+
+  &lt;<a href='dtd-manual.elt.distribution.html'>distribution</a> id=&quot;man90&quot;&gt;
+    &lt;<a href='dtd-manual.elt.name.html'>name</a>&gt;Mandrake&lt;/name&gt;
+    &lt;<a href='dtd-manual.elt.version.html'>version</a>&gt;9.0&lt;/version&gt;
+    &lt;<a href='dtd-manual.elt.architecture.html'>architecture</a>&gt;i386&lt;/architecture&gt;
+
+    &lt;<a href='dtd-manual.elt.component.html'>component</a>&gt;
+     &lt;<a href='dtd-manual.elt.name.html'>name</a>&gt;extra&lt;/name&gt;
+      &lt;<a href='dtd-manual.elt.url.html'>url</a> method=&apos;file&apos;&gt;mandrex&lt;/url&gt;
+    &lt;/component&gt;
+  &lt;/distribution&gt;
+
+  &lt;<a href='dtd-manual.elt.distribution.html'>distribution</a> id=&apos;suse73&apos;&gt;
+    &lt;<a href='dtd-manual.elt.name.html'>name</a>&gt;SuSE&lt;/name&gt;
+    &lt;<a href='dtd-manual.elt.version.html'>version</a>&gt;7.3&lt;/version&gt;
+    &lt;<a href='dtd-manual.elt.architecture.html'>architecture</a>&gt;i386&lt;/architecture&gt;
+
+    &lt;<a href='dtd-manual.elt.component.html'>component</a>&gt;
+      &lt;<a href='dtd-manual.elt.name.html'>name</a>&gt;extra&lt;/name&gt;
+      &lt;<a href='dtd-manual.elt.url.html'>url</a> method=&apos;file&apos;&gt;extra&lt;/url&gt;
+      &lt;<a href='dtd-manual.elt.accept.html'>accept</a>&gt;i386&lt;/accept&gt;
+      &lt;<a href='dtd-manual.elt.reject.html'>reject</a>&gt;src&lt;/reject&gt;
+    &lt;/component&gt;
+
+    &lt;<a href='dtd-manual.elt.component.html'>component</a> update-rpms=&quot;yes&quot;&gt;
+      &lt;<a href='dtd-manual.elt.name.html'>name</a>&gt;kde&lt;/name&gt;
+      &lt;<a href='dtd-manual.elt.url.html'>url</a> method=&apos;ftp&apos;&gt;ftp.gwdg.de/pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/&lt;/url&gt;
+      <em>&lt;!-- remove the hostname and directories: pub/.....supplementary/ --&gt;</em> 
+      &lt;<a href='dtd-manual.elt.wget.html'>wget</a> cutdirs=&apos;7&apos;&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/applications&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/development&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/experimental&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/internationalization&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/source&lt;/excludedir&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    <em>&lt;!--
+      The rpms won&apos;t be updated from this server as the attribute update-rpms
+      is missing.  This server can be used as back up server for the before
+      mentioned kde download server (ftp.gwdg.de).
+    --&gt;</em>
+    &lt;<a href='dtd-manual.elt.component.html'>component</a>&gt;
+      &lt;<a href='dtd-manual.elt.name.html'>name</a>&gt;kde&lt;/name&gt;
+      &lt;<a href='dtd-manual.elt.url.html'>url</a> method=&apos;ftp&apos;&gt;ftp.suse.com/pub/suse/i386/supplementary/KDE/update_for_7.3/base&lt;/url&gt;
+      <em>&lt;!-- remove the hostname and directories pub/suse/i386/supplementary --&gt;</em>
+      &lt;<a href='dtd-manual.elt.wget.html'>wget</a> continue=&quot;no&quot; cutdirs=&apos;4&apos; /&gt;
+    &lt;/component&gt;
+
+    &lt;<a href='dtd-manual.elt.component.html'>component</a> update-rpms=&quot;yes&quot;&gt;
+      &lt;<a href='dtd-manual.elt.name.html'>name</a>&gt;update&lt;/name&gt;
+      &lt;<a href='dtd-manual.elt.url.html'>url</a> method=&apos;ftp&apos;&gt;ftp.gwdg.de/pub/linux/suse/ftp.suse.com/suse/i386/update/7.3&lt;/url&gt;
+      &lt;<a href='dtd-manual.elt.wget.html'>wget</a> cutdirs=&apos;7&apos;&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/beo1&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/doc2&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/emu1&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de1&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de2&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de3&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de9&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.2.19-20011026&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.4.10-20011026&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.4.16-20011220&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/zq1&lt;/excludedir&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;<a href='dtd-manual.elt.component.html'>component</a> update-rpms=&quot;yes&quot; list-most-recent=&quot;yes&quot;&gt;
+      &lt;<a href='dtd-manual.elt.name.html'>name</a>&gt;ximian&lt;/name&gt;
+      &lt;<a href='dtd-manual.elt.url.html'>url</a> method=&apos;ftp&apos;&gt;ftp.ximian.com/pub/ximian-gnome/suse-73-i386&lt;/url&gt;
+      &lt;<a href='dtd-manual.elt.wget.html'>wget</a> cutdirs=&apos;1&apos;&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;pub/ximian-gnome/suse-73-i386/source&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.add-arg.html'>add-arg</a>&gt;--proxy=off --reject *-devel-*&lt;/add-arg&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;<a href='dtd-manual.elt.component.html'>component</a> update-rpms=&quot;yes&quot;&gt;
+      &lt;<a href='dtd-manual.elt.name.html'>name</a>&gt;mozilla&lt;/name&gt;
+      &lt;<a href='dtd-manual.elt.url.html'>url</a> method=&apos;file&apos;&gt;/dist/okna2002/download&lt;/url&gt;
+      <em>&lt;!--
+         Make sure that the script stores the downloaded rpms in the 
+         location that is specified in the url.  The script can be any
+         arbitrary script, taking $topdir as 1st argument and $urldir as 
+         2nd argument (handed over to the script by aptate).  It can be
+         wrapper around wget, rsync, etc.
+      --&gt;</em>
+      &lt;<a href='dtd-manual.elt.script.html'>script</a>&gt;/usr/bin/local/mirrorit&lt;/script&gt;
+    &lt;/component&gt;
+
+    &lt;<a href='dtd-manual.elt.component.html'>component</a> update-rpms=&quot;yes&quot;&gt;
+      &lt;<a href='dtd-manual.elt.name.html'>name</a>&gt;opera&lt;/name&gt;
+      &lt;<a href='dtd-manual.elt.url.html'>url</a> method=&apos;ftp&apos;&gt;sunsite.cnlab-switch.ch/mirror/opera/linux/600/&lt;/url&gt;
+      &lt;<a href='dtd-manual.elt.wget.html'>wget</a> cutdirs=&apos;1&apos;&gt;
+        &lt;<a href='dtd-manual.elt.add-arg.html'>add-arg</a>&gt;--proxy=off --reject *.deb --reject *.bz2 --reject *.gz --reject *shared*&lt;/add-arg&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;mirror/opera/linux/600/tp3&lt;/excludedir&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;<a href='dtd-manual.elt.component.html'>component</a> update-rpms=&quot;yes&quot;&gt;
+      &lt;<a href='dtd-manual.elt.name.html'>name</a>&gt;nvidia&lt;/name&gt;
+      &lt;<a href='dtd-manual.elt.url.html'>url</a> method=&apos;ftp&apos;&gt;ftp://205.158.109.140/XFree86_40&lt;/url&gt;
+      &lt;<a href='dtd-manual.elt.wget.html'>wget</a>&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;XFree86_40/0.9-*&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;XFree86_40/1.0-1*&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;XFree86_40/1.0-2313&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.excludedir.html'>excludedir</a>&gt;XFree86_40/nforce&lt;/excludedir&gt;
+        &lt;<a href='dtd-manual.elt.add-arg.html'>add-arg</a>&gt;--accept *suse73*&lt;/add-arg&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+  &lt;/distribution&gt;
+&lt;/opt&gt;
+
+
+</pre>
+    <div class='navfooter'>
+      <hr />
+      <table summary='Footer navigation table' width='100%' border='0' cellpadding='0' cellspacing='0'>
+        <colgroup><col width='33%'/><col width='34%'/><col width='33%'/></colgroup>
+        <tr valign='top'>
+          <td align='left'>
+            
+              <a href='dtd-manual.book.examples_list.html' accesskey='P'><img src='prev.png' alt='Previous' border='0'/></a>
+            
+          </td>
+          <td align='center'>
+            
+              <a href='dtd-manual.book.home.html' accesskey='H'><img src='home.png' alt='Home' border='0'/></a>
+            
+          </td>
+          <td align='right'>
+            
+              <a href='dtd-manual.ex.aptate.conf.html' accesskey='N'><img src='next.png' alt='Next' border='0'/></a>
+            
+          </td>
+        </tr>
+        <tr valign='top'>
+          <td align='left'>examples list</td>
+          <td align='center'>
+            
+              <a href='dtd-manual.book.examples_list.html' accesskey='U'><img src='up.png' alt='Up' border='0'/></a>
+            
+          </td>
+          <td align='right'>aptate.conf</td>
+        </tr>
+        <tr>
+           <td colspan='3' align='center'><cite>--- Generated by dtd2html ---</cite></td>
+        </tr>
+      </table>
+    </div>
+  </body>
+
+</html>
+
+

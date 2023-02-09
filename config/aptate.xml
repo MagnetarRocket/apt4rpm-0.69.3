@@ -1,0 +1,144 @@
+<?xml version='1.0' encoding="iso-8859-1"?>
+<!DOCTYPE opt SYSTEM "aptate.dtd">
+
+<!--
+   This is an example aptate configuration file.  It shows most of aptate's
+   elements and element attributes.  A nice way to create this file is by
+   using xemacs in pgsml mode.  Xemacs in this mode will be of great help,
+   as it gives you a gui to make this configuration file.  Make sure though
+   that the filename ends at ".xml"!
+
+   All possibilities are described in the manual, that can be found at:
+   file:///usr/share/doc/packages/apt4rpm/dtd-manual/dtd-manual.book.home.html
+-->
+
+<opt
+  security-component="yes"
+  update-rpms='yes'
+>
+
+  <!-- all files are relative to this path -->
+  <topdir>/dist/okna2002</topdir>
+
+  <!-- Information used to sign the apt repository -->
+  <authorization>
+    <name>joe</name>
+    <email>joe@users.sourceforge.net</email>
+  </authorization>
+
+  <!-- It's not required to specify the protocol -->
+  <sources-list-file>/dist/okna2002/apt</sources-list-file>
+  <sources-list-ftp>/gw/suse/suse-8.1/apt/</sources-list-ftp>
+  <sources-list-http>http://www.okna.rm/apt</sources-list-http>
+
+  <distribution id="man90">
+    <name>Mandrake</name>
+    <version>9.0</version>
+    <architecture>i386</architecture>
+
+    <component>
+     <name>extra</name>
+      <url method='file'>mandrex</url>
+    </component>
+  </distribution>
+
+  <distribution id='suse73'>
+    <name>SuSE</name>
+    <version>7.3</version>
+    <architecture>i386</architecture>
+
+    <component>
+      <name>extra</name>
+      <url method='file'>extra</url>
+      <accept>i386</accept>
+      <reject>src</reject>
+    </component>
+
+    <component update-rpms="yes">
+      <name>kde</name>
+      <url method='ftp'>ftp.gwdg.de/pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/</url>
+      <!-- remove the hostname and directories: pub/.....supplementary/ --> 
+      <wget cutdirs='7'>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/applications</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/development</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/experimental</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/internationalization</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/source</excludedir>
+      </wget>
+    </component>
+
+    <!--
+      The rpms won't be updated from this server as the attribute update-rpms
+      is missing.  This server can be used as back up server for the before
+      mentioned kde download server (ftp.gwdg.de).
+    -->
+    <component>
+      <name>kde</name>
+      <url method='ftp'>ftp.suse.com/pub/suse/i386/supplementary/KDE/update_for_7.3/base</url>
+      <!-- remove the hostname and directories pub/suse/i386/supplementary -->
+      <wget continue="no" cutdirs='4' />
+    </component>
+
+    <component update-rpms="yes">
+      <name>update</name>
+      <url method='ftp'>ftp.gwdg.de/pub/linux/suse/ftp.suse.com/suse/i386/update/7.3</url>
+      <wget cutdirs='7'>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/beo1</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/doc2</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/emu1</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de1</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de2</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de3</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de9</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.2.19-20011026</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.4.10-20011026</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.4.16-20011220</excludedir>
+        <excludedir>pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/zq1</excludedir>
+      </wget>
+    </component>
+
+    <component update-rpms="yes" list-most-recent="yes">
+      <name>ximian</name>
+      <url method='ftp'>ftp.ximian.com/pub/ximian-gnome/suse-73-i386</url>
+      <wget cutdirs='1'>
+        <excludedir>pub/ximian-gnome/suse-73-i386/source</excludedir>
+        <add-arg>--proxy=off --reject *-devel-*</add-arg>
+      </wget>
+    </component>
+
+    <component update-rpms="yes">
+      <name>mozilla</name>
+      <url method='file'>/dist/okna2002/download</url>
+      <!--
+         Make sure that the script stores the downloaded rpms in the 
+         location that is specified in the url.  The script can be any
+         arbitrary script, taking $topdir as 1st argument and $urldir as 
+         2nd argument (handed over to the script by aptate).  It can be
+         wrapper around wget, rsync, etc.
+      -->
+      <script>/usr/bin/local/mirrorit</script>
+    </component>
+
+    <component update-rpms="yes">
+      <name>opera</name>
+      <url method='ftp'>sunsite.cnlab-switch.ch/mirror/opera/linux/600/</url>
+      <wget cutdirs='1'>
+        <add-arg>--proxy=off --reject *.deb --reject *.bz2 --reject *.gz --reject *shared*</add-arg>
+        <excludedir>mirror/opera/linux/600/tp3</excludedir>
+      </wget>
+    </component>
+
+    <component update-rpms="yes">
+      <name>nvidia</name>
+      <url method='ftp'>ftp://205.158.109.140/XFree86_40</url>
+      <wget>
+        <excludedir>XFree86_40/0.9-*</excludedir>
+        <excludedir>XFree86_40/1.0-1*</excludedir>
+        <excludedir>XFree86_40/1.0-2313</excludedir>
+        <excludedir>XFree86_40/nforce</excludedir>
+        <add-arg>--accept *suse73*</add-arg>
+      </wget>
+    </component>
+  </distribution>
+</opt>
+

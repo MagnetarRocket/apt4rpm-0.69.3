@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- root element "options".  -->
+<!-- @INCLUDE man/elt.opt.html -->
+<!ELEMENT opt
+  (
+    topdir,
+    sharedir?,
+    repdir?,
+    authorization*,
+    (sources-list-file?, sources-list-ftp?, sources-list-http?),
+    distribution+
+  )
+>
+<!ATTLIST opt 
+  bad-rpm-mode		(report-only|rename)	"report-only"
+  bloat			(yes|no)	"yes"
+  flat			(yes|no)	"yes"
+  follow		(yes|no)	"no"
+  old-hashfile		(yes|no)	"yes"
+  patch-rpm-component	(yes|no)	"yes"
+  patch-rpm-string	(prpm|patchrpm) "prpm"
+  security-component	(yes|no)	"no"
+  signed-pkgs-only	(yes|no)	"no"
+  sign-repository	(yes|no)	"no"
+  update-rpms		(yes|no)	"no"
+  verbose		(0|1|2|3|4)	"3"
+  wget-tries		NMTOKEN "0"
+  wget-wait		NMTOKEN "0"
+>
+
+<!-- Holds all information belonging to 1 distribution.  -->
+<!-- @INCLUDE man/elt.distribution.html -->
+<!ELEMENT distribution
+  ((name,version,architecture,language?),archive?,component+)
+>
+<!ATTLIST distribution id ID 		#REQUIRED
+  security-component	(yes|no) 	#IMPLIED
+  patch-rpm-component	(yes|no)	#IMPLIED
+  process		(yes|no)	"yes"
+  structure		(1|2|3|4)	"1"
+  yum			(yes|no)	"no"
+>
+
+<!-- Define the version of the distribution.  -->
+<!-- The following characters are allowed: alphanumeric -_./ -->
+<!-- Examples are: 2.2, 7.3, 8.1, etc.  -->
+<!ELEMENT version (#PCDATA)>
+
+<!-- Define the architecture of the distribution.  -->
+<!-- The following characters are allowed: alphanumeric -_./ -->
+<!-- Examples are: i386, i586, ppc, etc.  -->
+<!ELEMENT architecture (#PCDATA)>
+
+<!-- Define the language of the distribution.  -->
+<!-- @INCLUDE man/elt.language.html -->
+<!ELEMENT language (#PCDATA)>
+
+<!-- Define user specified archive of the distribution.  -->
+<!-- @INCLUDE man/elt.archive.html -->
+<!ELEMENT archive (#PCDATA)>
+
+<!-- Define the top directory.  -->
+<!-- @INCLUDE man/elt.topdir.html -->
+<!ELEMENT topdir (#PCDATA)>
+
+<!-- Define the shared directory.  -->
+<!-- @INCLUDE man/elt.sharedir.html -->
+<!ELEMENT sharedir (#PCDATA)>
+
+<!-- Define the repository directory.  -->
+<!-- @INCLUDE man/elt.repdir.html -->
+<!ELEMENT repdir (#PCDATA)>
+
+<!-- Holds all authorization information.  -->
+<!-- @INCLUDE man/elt.authorization.html -->
+<!ELEMENT authorization (name,email)>
+
+<!-- Define a name.  -->
+<!-- @INCLUDE man/elt.name.html -->
+<!ELEMENT name (#PCDATA)>
+
+<!-- Define an email address -->
+<!ELEMENT email (#PCDATA)>
+
+<!-- Provide an example sources.list file &#x0075;rl -->
+<!-- @INCLUDE man/elt.sources-list-file.html -->
+<!ELEMENT sources-list-file (#PCDATA)>
+
+<!-- Provide an example sources.list ftp &#x0075;rl -->
+<!-- @INCLUDE man/elt.sources-list-ftp.html -->
+<!ELEMENT sources-list-ftp  (#PCDATA)>
+
+<!-- Provide an example sources.list http &#x0075;rl -->
+<!-- @INCLUDE man/elt.sources-list-http.html -->
+<!ELEMENT sources-list-http (#PCDATA)>
+
+<!-- Holds all information belonging to 1 component -->
+<!-- @INCLUDE man/elt.component.html -->
+<!ELEMENT component 
+  (
+    name,
+    url,
+    ( accept | reject )*,
+    ( script | wget )?
+  )
+>
+<!ATTLIST component
+  active		(yes|no)	"yes"
+  list-most-recent	(yes|no)	"no"
+  update-rpms		(yes|no)	"yes"
+  scan			(yes|no)	"yes"
+>
+
+<!-- Define a url. -->
+<!-- @INCLUDE man/elt.url.html -->
+<!ELEMENT url (#PCDATA)>
+<!ATTLIST url
+  method	(file|ftp)	"file"
+>
+
+<!-- Define a rule to include certain rpms only -->
+<!-- @INCLUDE man/elt.accept.html -->
+<!ELEMENT accept (#PCDATA)>
+
+<!-- Define a rule to exclude certain rpms -->
+<!-- @INCLUDE man/elt.reject.html -->
+<!ELEMENT reject (#PCDATA)>
+
+<!-- Holds all information for the mirror application wget.  -->
+<!-- @INCLUDE man/elt.wget.html -->
+<!ELEMENT wget (excludedir|add-arg)*>
+<!ATTLIST wget
+  continue	(yes|no)	"yes"
+  cutdirs 	(0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15)	"0"
+>
+
+<!-- Specifies a script to download packages -->
+<!-- @INCLUDE man/elt.script.html -->
+<!ELEMENT script (#PCDATA)>
+
+<!-- Define directories to excluded from download -->
+<!-- @INCLUDE man/elt.excludedir.html -->
+<!ELEMENT excludedir (#PCDATA)>
+
+<!-- Define additional wget arguments -->
+<!-- @INCLUDE man/elt.add-arg.html -->
+<!ELEMENT add-arg (#PCDATA)>
+

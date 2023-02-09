@@ -1,0 +1,59 @@
+<p>The script can be wrapper around rsyncs, cp's or wget calls.  The script
+ is triggered by the --update-rpms argument of aptate.  The rpms that are
+ retrieved by the script must be stored at the location that is specified in
+ the &lt;url> tag.
+</p>
+<p>The script is given 2 arguments, the 1st argument is the
+ &lt;topdir&gt; and the 2nd one is
+ the location where the rpms must be stored.  Find below an example of a
+ possible download script.
+</p>
+
+<hr>
+<pre>
+# !/bin/sh
+
+while test $# -gt 0; do
+case $1 in
+--redhat )
+site=ftp://updates.redhat.com
+prefix=
+cutdirs=0
+  shift
+  break
+  ;;
+--* )
+  echo "Invalid option $1"
+  exit 1
+  ;;
+## More sites can be added here
+* )
+  break
+  ;;
+esac
+done
+if test $# -ne 2; then
+  echo "Invalid number of arguments: $#"
+  exit 1
+fi
+
+topdir=$1
+urldir=$2
+
+dst=${topdir}/mirrors/ftp.redhat.com/pub/updates
+src=/8.0/en/os
+
+if test -z "$site"; then
+   echo "Missing site"
+   exit 1
+fi
+
+if test "$d" != "0" ; then
+   # don't d/l certain files based on today's weekday
+   excludes="$excludes -X ${prefix}${src}/athlon"
+fi
+
+wget -r --cut-dirs=$cutdirs -m -nH -c --passive-ftp \
+$excludes -P ${dst} ${site}${prefix}${src}
+</pre>
+<hr>

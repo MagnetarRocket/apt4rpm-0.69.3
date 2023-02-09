@@ -1,0 +1,2852 @@
+#! @BASH@
+##################################################################
+#
+# Advanced Package Tool (APT) repository generation program 
+# for rpm packages 
+# Original idea by Marcel Ritter 
+# Written by Marcel Ritter and Richard Bos 
+# Copyright (C) 2001,2002,2003,2004 M Ritter and R Bos 
+# aptate is a contamination of apt and update
+#
+# File:           $RCSfile: aptate.in,v $
+# Revision:       $Revision: 1.288 $
+# Last change:    $Date: 2005/02/28 09:26:25 $
+# Last change by: $Author: rbos $
+#
+# Send suggestions to: apt4rpm-devel@lists.sourceforge.net
+# Homepage: http://apt4rpm.sourceforge.net
+#
+# This program is free software; you can redistribute it and/or 
+# modify it under the terms of the GNU General Public License 
+# as published by the Free Software Foundation; either version 2 
+# of the License, or (at your option) any later version. 
+#
+# This program is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+# GNU General Public License for more details. 
+#
+# For a copy of the GNU General Public License, visit 
+# http://www.gnu.org or write to the Free Software Foundation, Inc., 
+# 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. 
+#
+##################################################################
+
+APTATE_PERLLIBDIR=${APTATE_PERLLIBDIR-@APTATEDATADIR@}
+
+#########################
+###### FUNCTIONS ########
+#########################
+
+function filesize()
+{
+  ls -ld "$1" | awk '{printf("%d", $5)}'
+}
+
+function apt_exit_on_trap()
+###########################
+{
+  # reset trap, to prevent the exit function to be called multiple times
+  trap - EXIT > /dev/null
+
+  echo -e "\n$PRGNAME interrupted, cleaning up temporary files..." >&2
+
+  apt_exit $ERR_TRAP
+}
+
+function apt_exit()
+###################
+{
+  # disable the trap for EXIT, preventing that it will call itself on this exit
+  trap - EXIT;
+
+  displ_bad_rpms
+  clean_up_rep_tmpdir
+  clean_up_tmpdir
+  clean_up_distid_lock
+
+  echo "EXITVALUE: $1" >&6
+  exit $1
+}
+
+function clean_up_rep_tmpdir()
+##############################
+{
+  if [[ -n "$BASE_ARCHIVE_TMP_DIR" ]] && [[ -d "$BASE_ARCHIVE_TMP_DIR" ]]; then
+
+    # Define a value for VERBOSE in case it is not set
+    if [[ ${VERBOSE:-0} -le ${DEBUG_LEVEL:-5} ]]; then
+      rm -rf "$BASE_ARCHIVE_TMP_DIR"
+    else
+      ( echo
+        echo "Temporary directory \"$BASE_ARCHIVE_TMP_DIR\""
+        echo "not removed for debugging purposes."
+        echo
+        echo "  The presence of this directory will prevent other aptate"
+        echo "  instances to run.  Remove this directory as soon as possible"
+        echo "  or move it to another location."
+        echo
+      ) >&2
+    fi
+  fi
+}
+
+function clean_up_distid_lock()
+###############################
+{
+  if [[ -f "$LOCK" ]]; then
+    # Remove the lock only, if the lock belongs to _this_ aptate instance
+    [[ $(cat $LOCK) = $$ ]] && rm -f $LOCK
+  fi
+}
+
+function displ_bad_rpms()
+#########################
+{
+  if [[ -n "$TMPDIR" && -s $TMPDIR/bad.rpms ]]; then
+
+    ( echo
+      echo -n "Note: the packages below could not be queried successfully "
+      echo "(rpm -qp <pkg>)"
+
+      sed 's+^+  +' $TMPDIR/bad.rpms
+      echo
+
+      case $BAD_RPMS_MODE in
+
+      rename)
+        echo -n "  They have been marked as bad rpm packages, by "
+        echo "suffixing the files"
+        echo "  with \".bad\"."
+        ;;
+
+      report-only)
+        echo -n "  Take corrective action to prevent that this problem is "
+        echo "reported over and"
+        echo "  over again."
+        echo
+        echo "  Possible actions to be taken:"
+        echo -n "  Download the rpms once more or in case you use e.g. rsync "
+        echo "it's sufficient"
+        echo -n "  to remove the bad rpms.  In case the packages are corrupted "
+        echo "at the source,"
+        echo "  you need to notify the package provider(s)."
+        ;;
+
+      esac
+
+      echo
+
+    ) >&2
+
+    rm $TMPDIR/bad.rpms
+  fi
+}
+
+function clean_up_tmpdir()
+##########################
+{
+  if [[ -n "$TMPDIR" ]] && [[ -d $TMPDIR ]]; then
+    if [[ ${VERBOSE:-0} -le ${DEBUG_LEVEL:-5} ]]; then
+      rm -rf $TMPDIR
+    else
+      ( echo
+        echo -n "Temporary directory \"$TMPDIR\" not "
+        echo "removed for debugging purposes." >&2
+      ) >&2
+    fi
+  fi
+}
+
+function hourglass()
+####################
+{
+  local INDEX
+  declare -i INDEX=0
+
+  local CLOCKFILE=$1
+  :> $CLOCKFILE
+
+  # Create a spinning wheel
+  # SWC: Spinning Wheel Character
+  local SWC0="|"
+  local SWC1="/"
+  local SWC2="-"
+  local SWC3="\\"
+
+  while [[ -f $CLOCKFILE ]]
+  do
+    eval printf "%s\$ESC[D" \$SWC$INDEX >&4
+    INDEX=$INDEX+1
+    sleep 1
+    [[ $INDEX = 4 ]] && INDEX=0
+  done
+}
+
+function mirror()
+#################
+{
+  local ID=$1
+  local COMP=$2
+  local FURL=$3
+  local LOG_DIR=$4
+
+  local RET
+  local CLOCKFILE=$TMPDIR/mirror::clockrunning
+  local WARG
+
+  printf "${SCP}FTP access ... " >&4
+
+  hourglass $CLOCKFILE &
+  RET=$!
+
+  if [[ ! -d $LOG_DIR ]]; then
+    mkdir -p $LOG_DIR
+  fi
+
+  local LOG_FILE=$LOG_DIR/$COMP
+  WARG="$(awk -F";" -v recid=$ID '{if (NR == recid) print $7}' $MIRRORTMP)"
+  ( echo -ne "wget -P $UPDATEDIR --mirror --dont-remove-listing "
+    echo -ne "-w $WGET_WAIT -o $LOG_FILE -t $WGET_TRIES "
+    echo -ne "$WARG ftp://$FURL"
+    echo
+  ) >&6
+  wget -P $UPDATEDIR --mirror --dont-remove-listing -w $WGET_WAIT \
+    -o $LOG_FILE -t $WGET_TRIES $WARG ftp://${FURL##ftp://}
+
+  rm -f $CLOCKFILE
+  wait $RET
+
+  printf "$RCP$CLEOL" >&4
+  return 0
+}
+
+function check_rpm()
+####################
+{
+  local FILENAME=$1
+  local SEC_PKG=""
+
+  # SuSE specific security setup
+  if [[ "$DIST" = SuSE ]]; then
+    local INFONAME=$(dirname $FILENAME)
+    INFONAME="${INFONAME}/"$(rpm -qp $RPM_NOSIGNATURE_ARG --queryformat \
+      '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}_en.info' $FILENAME)
+
+    if [[ -f "$INFONAME" ]] && grep -q -i "Security:[[:space:]]*Yes" "$INFONAME"; then
+      SEC_PKG="SEC_OK"
+    fi
+  fi
+
+  echo "$SEC_PKG"
+}
+
+function add_sourceslist_examples()
+###################################
+{
+  local PREFIX
+  local POSTFIX
+  local LOCALKEY
+  local PREFIXES
+
+  if [[ -n "$1" ]]; then
+    LOCALKEY="[$1]"
+  fi
+
+  PREFIXES=$(perl -I${APTATE_PERLLIBDIR} -MAptate::Config \
+    -e "ActionGetSourcesList('$CONFIG_FOUND','$DISTID','$REP_DIR')" ) ||
+    apt_exit $ERR_CONFIGURATION
+  eval $PREFIXES 
+
+  for POSTFIX in HTTP FTP FILE; do
+    eval PREFIX=\$PREFIX_$POSTFIX
+    if [[ -n "$PREFIX" ]]; then
+
+      # The code below makes it possible that a user provides the url
+      # with or without protocol specifier.  The following 2 constructions
+      # will provide the same result: http://www.okna98.rm/apt and
+      # www.okna98.rm/apt
+      case $POSTFIX in
+        FILE) PREFIX=$(echo file:${PREFIX##file:}) ;;
+         FTP) PREFIX=$(echo  ftp://${PREFIX##ftp://}) ;;
+        HTTP) PREFIX=$(echo http://${PREFIX##http://}) ;;
+      esac
+
+      ( echo "#"
+        echo "# Repository created by: $PRGNAME (version $PRGVRSN)"
+        echo -n "# At: "
+        LANG=C date
+        echo "# More info about $PRGNAME at: http://apt4rpm.sourceforge.net"
+        echo "#"
+        echo "rpm     $LOCALKEY $PREFIX $ARCHIVE $COMP_LIST"
+        echo "rpm-src $LOCALKEY $PREFIX $ARCHIVE $COMP_LIST"
+
+      ) > $EXAMPLEDIR/sources.list.$POSTFIX
+    fi
+  done
+}
+
+function build_cache()
+######################
+{
+  local BASENAME=$1
+  local SRCDIR=$2
+  local ID=$3
+  local REBUILD_CACHE=$4
+  local SCAN_RPM_DIR=$5
+
+  local CACHEFILE=$CACHEDIR/$BASENAME
+  local CHANGES=$TMPDIR/build_cache::changes
+  local CURCACHE=$TMPDIR/build_cache::current_cache
+  local NEWCACHE=$TMPDIR/build_cache::cache.$BASENAME
+  local NEWPKGS=$TMPDIR/build_cache::pkgs
+  local TMPFILE=$TMPDIR/build_cache::tmp
+  local SCAN_RPM_WARN=no
+
+  local FILENAME
+  local ACCEPT
+  local REJECT
+
+  printf " %-16s  -> " $SOURCE_NAME >&3
+  printf "${SCP}Processing... " >&4
+
+  # Change to the directory, as otherwise rpms won't be found in case the
+  # top directory is actually a linked directory.  The find argument "-follow"
+  # is not used by default to prevent that find moves out the find path.
+  # An example of such a situation is a directory that is linked root (/).
+  # If the linked subdirectories are located in find path they will be found
+  # anyway.
+  # Change the directory within "(....)" so the directory is changed in 
+  # another shell.  After leaving the "(....)" we're still in the same
+  # location.
+  # Future code could be extended to report a warning in case linked
+  # directories or files are encountered.  The check can be made with e.g.
+  # $ find . -type l -xtype f -printf "%d %l %h\n" (check for linked files)
+  # $ find . -type l -xtype d -printf "%d %l %h\n" (check ofr linked dirs)
+  #
+  if [[ $SCAN_RPM_DIR = yes ]]; then
+
+    ( cd $SRCDIR
+      find . $FOLLOW -name "*.[sr]pm" -type f > $TMPFILE 2>/dev/null
+    )
+
+    ACCEPT=$(grep "^$ID;" $MIRRORTMP | cut -d";" -f8)
+    REJECT=$(grep "^$ID;" $MIRRORTMP | cut -d";" -f9)
+
+    # Add "--" to the grep arguments to prevent an error reported by grep, in case
+    # the regular expression starts with a "-".  Define fallback values for the
+    # ACCEPT or REJECT regular expressions in case they are not defined, 
+    # respectively: "^" and "^$".
+    sed s+^\.+$SRCDIR+ $TMPFILE | tr -s "/" | grep -E -- "${ACCEPT:-^}" | 
+      grep -vE -- "${REJECT:-^$}" | sort > $NEWPKGS
+    rm $TMPFILE
+
+    if [[ ! -f $CACHEFILE ]] || [[ "$REBUILD_CACHE" = yes ]]; then
+
+      sed 's+^+add;+' $NEWPKGS > $CHANGES
+
+      # make sure to have a new cache (under any circumstances).
+      touch $NEWCACHE
+
+    else
+      # Use the cache to prevent time consuming rpm queries to be run each
+      # time aptate is run.
+      cp $CACHEFILE $CURCACHE
+
+      # Audit the cache: it might be that directories have disappeared since
+      # aptate run for the last time
+      CACHEDIRS=$(grep -v ";$SRCDIR/" $CURCACHE |
+        awk -F";" '{ print $2 }' | while read DIR rest
+        do
+          dirname $DIR
+        done | sort -u
+      )
+
+      for DIR in $CACHEDIRS
+      do
+        if [[ ! -d $DIR ]]; then
+          grep -v ";$DIR" $CURCACHE > $TMPFILE
+          mv $TMPFILE $CURCACHE
+        fi
+      done
+
+      # Audit for a file that appears in cache multiple times.
+      # This can happen if a package failed the gpg check initially, but
+      # passes later on as it has been signed...
+      local FILES
+      FILES=$(awk -F";" '{ print $2 }' $CURCACHE | sort | uniq -c |
+        grep -v "[[:space:]]1[[:space:]]$SRCDIR" | awk '{ print $2 }')
+
+      local FILE
+      for FILE in $FILES; do
+        grep -v $FILE $CURCACHE > $TMPFILE
+        mv $TMPFILE $CURCACHE
+      done
+
+      # The grep for SRCDIR is needed, because the rpm repository may contain,
+      # for whatever reason, additional directories at the same level as
+      # SRCDIR.  The rpms in the additional directories are unwanted.
+      awk -F";" '{ print $2 }' $CURCACHE | grep ^$SRCDIR | sort > $TMPFILE
+
+      # Determine the differences (adds and removes) between the cached rpms
+      # and the rpms on disk.
+      comm -13 $TMPFILE $NEWPKGS | sed 's+^+add;+' >  $CHANGES
+      comm -23 $TMPFILE $NEWPKGS | sed 's+^+rem;+' >> $CHANGES
+      rm -f $TMPFILE
+
+      mv $CURCACHE $NEWCACHE
+    fi
+  else
+    # RPM_SCAN_DIR = no
+    touch $CHANGES
+
+    if [[ -f $CACHEFILE ]]; then
+      cp $CACHEFILE $NEWCACHE
+    else
+      touch $NEWCACHE
+      # Issue a warning as RPM_SCAN_DIR's default value is 'yes',
+      # Being 'no' indicates that the user changed it.
+      SCAN_RPM_WARN=yes
+    fi
+  fi
+
+  if [[ ! -s $CHANGES ]]; then
+
+    printf "$RCP$CLEOL" >&4
+
+    if [[ $SCAN_RPM_DIR = yes ]]; then
+      printf "No change\n" >&3
+    else
+      printf "Not scanned\n" >&3
+
+      if [[ $SCAN_RPM_WARN = yes ]]; then
+
+        # The cache can be populated by activating scanning of the
+        # directory holding the rpms.  Scanning can be activated by --scan
+        # and the component attribute scan="yes".
+        ( printf " %-16s  >> Warning: " $BASENAME
+          printf "empty cache and rpm dir scanning de-activated\n"
+        ) >&2
+      fi
+    fi
+
+  else
+
+    local -i COUNT
+    local -i NUM
+    local DATE=$(date '+%y%m%d')
+
+    local -i TIME_CURRENT
+    local -i TIME_ESTIMATED
+    local -i TIME_LEFT
+    local -i TIME_START
+    local -i TIME_TOTAL
+
+    NUM=1
+    COUNT=$(cat $CHANGES | wc -l)
+    TIME_START=$(date '+%s')
+    awk 'BEGIN { FS=";" }{ printf("%s %s\n", $1, $2)}' $CHANGES | (
+    while read ACTION FILENAME; do
+
+      # progress indicator
+      printf "${RCP}Check: %11d/%d,  " $NUM $COUNT >&4
+      if [[ -n "$TIME_LEFT" ]]; then
+        printf "time left: %4ss" $TIME_LEFT >&4
+      fi
+
+      if [[ "$ACTION" = rem ]]; then
+        # package must be removed from the cache
+        grep -v "$FILENAME" $NEWCACHE > $TMPFILE
+        mv $TMPFILE $NEWCACHE
+      else
+        # a candidate package to be added to the cache
+        local RPM_ARCH
+        local RPM_CACHE_TYPE
+        local RPM_CACHE_NAME
+        local RPM_VR
+        local RPM_PATCHRPM=""
+        local RPM_TYPE
+        local RPM_OUT=""
+
+        # Some rpms return "(none)\c" for --requires.  For this reason
+        # start RPM_QUALIFIER with "\n"
+        local RPM_QUALIFIER="\nRPM_QRYRES RPM_TYPE=%{SOURCERPM}"
+        RPM_QUALIFIER="$RPM_QUALIFIER RPM_NAME=%{NAME}"
+        RPM_QUALIFIER="$RPM_QUALIFIER RPM_PAYLOAD=%{PAYLOADFORMAT}"
+        RPM_QUALIFIER="$RPM_QUALIFIER RPM_VR=%{VERSION}-%{RELEASE}"
+        RPM_QUALIFIER="$RPM_QUALIFIER RPM_ARCH=%{ARCH}\n"
+        RPM_OUT=$(rpm -qp -requires $RPM_NOSIGNATURE_ARG \
+          --queryformat "$RPM_QUALIFIER" $FILENAME 2>/dev/null)
+
+        if [[ $? -eq 0 ]]; then
+          RPM_OUT=$(echo "$RPM_OUT" | 
+           sed 's+rpmlib(PatchRPMs).*$+RPM_QRYRES RPM_PATCHRPM=yes+' |
+           grep ^RPM_QRYRES | cut -d" " -f2-
+          )
+          eval $RPM_OUT
+
+          if [[ "$RPM_TYPE" = none ]]; then
+
+            # source rpm
+            RPM_CACHE_TYPE=src
+
+            case "$FILENAME" in
+              *.nosrc.rpm) RPM_ARCH=nosrc ;;
+              *)           RPM_ARCH=src ;;
+            esac
+
+          else
+            if [[ "$RPM_PATCHRPM" = yes ]]; then
+              RPM_CACHE_TYPE=pat
+            else
+              if [[ "$RPM_PAYLOAD" = drpm ]]; then
+                # Delta rpm (Drpm or just DeLTa)
+                RPM_CACHE_TYPE=dlt
+              else
+                RPM_CACHE_TYPE=bin
+              fi
+            fi
+          fi
+
+          local SEC=$(check_rpm $FILENAME)
+
+          #
+          # check packages for MD5 sum/GPG signature
+          # Remark: do not change the "echo" order of the strings MD5_.. and
+          # GPG_..  Further on in the program regular expressions expect the
+          # strings to be in this order.
+          #
+          local MD5_GPG
+          local OUTPUT
+          local RET
+          OUTPUT=$(LANG=C rpm --checksig $FILENAME 2>&1)
+          RET=$?
+        
+          if [[ $RET -eq 0 ]]; then
+            if echo "$OUTPUT" | grep -i -q gpg; then
+              # md5 correct, pkg signed with known signature
+              MD5_GPG="MD5_OK;GPG_OK"
+            else
+              # md5 correct, pkg not signed
+              MD5_GPG="MD5_OK;GPG_FAILED"
+            fi
+          else
+            # rpm's exit value is 1 in case the gpg check failed.  This does not
+            # necessarily mean that the MD5 check failed.
+            if [[ $RET -eq 1 ]]; then
+              if echo "$OUTPUT" | grep -i -q "md5.*ok"; then
+                # md5 correct, pkg signed with unknown signature
+                MD5_GPG="MD5_OK;GPG_FAILED"
+              else
+                MD5_GPG="MD5_FAILED;GPG_FAILED"
+              fi
+            else
+              MD5_GPG="MD5_FAILED;GPG_FAILED"
+            fi
+          fi
+
+          FILESIZE=$(filesize $FILENAME)
+
+        else
+
+          RPM_CACHE_TYPE=""
+          RPM_NAME=""
+          RPM_VR=""
+          RPM_ARCH=""
+          SEC=""
+          MD5_GPG="MD5_X;GPG_X"
+          FILESIZE=""
+          
+        fi # rpm -qp -query <pkg> exit value = 0
+
+        local ADD_TO_CACHE=""
+
+        if echo "$MD5_GPG" | grep -qi MD5_OK; then
+
+          ADD_TO_CACHE=yes
+
+        else
+
+          case $BAD_RPMS_MODE in
+  
+          report-only)
+            # Do not add the rpm to the cache.
+            # Do not touch the rpm.
+            ADD_TO_CACHE=no
+            echo $TOPDIR/$FILENAME >> $TMPDIR/bad.rpms
+            ;;
+  
+          rename)
+            # Do not add the rpm to the cache.
+            # Rename the rpm.
+            # The system will now try to retrieve a correct rpm itself. 
+            # This may lead to "oscillation" (download (bad) rpm, rename
+            # bad rpm, etc).
+            ADD_TO_CACHE=no
+            mv $TOPDIR/$FILENAME $TOPDIR/$FILENAME.bad
+            echo $TOPDIR/$FILENAME.bad >> $TMPDIR/bad.rpms
+            ;;
+  
+          *)
+            # apt_exit can not be used here, as only the while loop
+            # will be exited :((
+            ( echo
+              echo -n "assert: unknown BAD_RPMS_MODE ($BAD_RPMS_MODE) value."
+            ) >&2
+            ;;
+          esac
+
+          # administrate corrupted pkg
+	  sed s,add\;$FILENAME,cor\;$FILENAME, $CHANGES > $TMPFILE
+	  mv $TMPFILE $CHANGES
+        fi
+
+        if [[ "$ADD_TO_CACHE" = yes ]]; then
+
+          ( echo -n "$RPM_CACHE_TYPE;$FILENAME;$RPM_NAME;$RPM_VR;$RPM_ARCH;"
+            echo "$SEC;$MD5_GPG;$DATE;$FILESIZE"
+          ) >> $NEWCACHE
+        fi
+
+      fi # ACTION = rem
+
+      TIME_CURRENT=$(date '+%s')
+      TIME_TOTAL=$(($TIME_CURRENT - $TIME_START))
+      TIME_ESTIMATED=$((($TIME_TOTAL * $COUNT) / $NUM))
+      TIME_LEFT=$(($TIME_ESTIMATED - $TIME_TOTAL))
+      if [[ $TIME_LEFT -lt 0 ]]; then
+        TIME_LEFT=0
+      fi
+      NUM=$(($NUM + 1))
+
+    done )
+
+    local -i ADD_CNT
+    local -i REM_CNT
+    local -i COR_CNT
+    ADD_CNT=$(grep -c "^add;" $CHANGES)
+    REM_CNT=$(grep -c "^rem;" $CHANGES)
+    COR_CNT=$(grep -c "^cor;" $CHANGES)
+
+    # Output stream 4 takes care of the escape characters
+    printf "$RCP$CLEOL" >&4
+
+    # Use -- in the printf statement as the arrow "->" is otherwise
+    # interpreted by printf as being an argument.
+    ( printf "RPMs added:   %4d\n" $ADD_CNT
+      printf "                   "
+      printf -- "-> RPMs removed: %4d\n" $REM_CNT
+      if [[ $COR_CNT -gt 0 ]]; then
+        printf " %-16s  >> " $BASENAME
+        printf "RPMs corrupt: %4d\n" $COR_CNT
+      fi
+    ) >&3
+
+  fi # if ! -s $CHANGES
+
+  # clean up
+  rm -f $CHANGES $NEWPKGS
+}
+
+function make_links()
+#####################
+{
+  local PATCH_TYPE=$1 # rpm patch type   (regular, security rpms)
+  local COMPONENT_NAME=$2
+  local ID=$3
+  local REBUILD_LINK_USER=$4
+
+  local BASENAME
+  local NEW_CACHE
+  local OLD_CACHE
+  local PKG_TYPE
+  local PKG_TYPES
+
+  # Go for the PKG_TYPEs = dlt|pat iterations first. As the apt component
+  # containing the (much smaller) delta or patch rpms will then be listed
+  # before the component containing the regular rpms in the sources.list
+  # example....
+  if [[ "$MK_PATCH_RPM_COMP" = yes ]]; then
+    PKG_TYPES="dlt pat bin"
+  else
+   PKG_TYPES="bin"
+  fi
+
+  for PKG_TYPE in $PKG_TYPES
+  do
+    # Assign BASENAME here, as the name is being altered if PKG_TYPE = patch
+    # to $BASENAME-patchrpm
+    BASENAME=$COMPONENT_NAME
+
+    case $PATCH_TYPE in
+
+    regular)
+
+      OLD_CACHE=$CACHEDIR/$BASENAME
+      NEW_CACHE=$TMPDIR/build_cache::cache.$BASENAME
+      ;;
+
+    security)
+      #
+      # The virtual apt component security, is composed of all security
+      # packages available.
+      #
+      local SRC_NAME
+      local OLD_CACHES
+      local NEW_CACHES
+
+      # prevent that old information is being used, while processing
+      # the "for" loop
+      unset OLD_CACHES
+      unset NEW_CACHES
+      for SRC_NAME in $SOURCE_NAMES
+      do
+        # Examine the old cache files, created in a previous aptate session
+
+        # The "if" is required, because it may happen that the
+        # cache file is not present anymore or has not been created
+        if [[ -s $CACHEDIR/$SRC_NAME ]]; then
+          OLD_CACHES="$OLD_CACHES $CACHEDIR/$SRC_NAME"
+        fi
+
+        # Examine the new cache files, created in the current session
+
+        if [[ -s $TMPDIR/build_cache::cache.$SRC_NAME ]]; then
+          NEW_CACHES="$NEW_CACHES $TMPDIR/build_cache::cache.$SRC_NAME"
+        fi
+      done
+
+      OLD_CACHE=$TMPDIR/make_links::cache-sec.old
+      if [[ -n "$OLD_CACHES" ]]; then
+        grep -h ";SEC_OK" $OLD_CACHES | sort > $OLD_CACHE
+      else
+        > $OLD_CACHE
+      fi
+
+      NEW_CACHE=$TMPDIR/make_links::cache-sec.new
+      if [[ -n "$NEW_CACHES" ]]; then
+
+        grep -h ";SEC_OK" $NEW_CACHES | sort > $NEW_CACHE
+      else
+        > $NEW_CACHE
+      fi
+
+    esac
+
+    # The cachefile contains information about all rpm types: binary, delta,
+    # patch and source rpms.  While an apt component holds only a combination
+    # of binary|source, delta|source or patch|source rpms.  At the lines below
+    # a temporary cache is created to obtain a (binary|delta|patch)|source
+    # only cache.
+    local VALID_CACHE
+    if [[ -r $NEW_CACHE ]]; then
+      case $PKG_TYPE in
+      bin)
+        # BASENAME does not change
+        PKG_TYPE_STR=Bin
+        ;;
+      dlt)
+        PKG_TYPE_STR=Dlt
+        BASENAME=${BASENAME}-drpm
+        ;;
+      pat)
+        PKG_TYPE_STR=Pat
+        BASENAME=${BASENAME}-${PATCH_RPM_STR}
+        ;;
+      *)
+        # report programmer error
+        echo "$PRGNAME: error: incorrect PKG_TYPE found" >&2
+        ;;
+      esac
+
+      if [[ "$PKG_TYPE" = bin ]]; then
+        VALID_CACHE=yes
+      else
+        # Are there any patch or delta rpms?  If not, there is no need to
+        # create the apt component at all.  Stop grepping after the first
+        # found line.
+        if grep -q --max-count 1 ^$PKG_TYPE $NEW_CACHE; then
+          VALID_CACHE=yes
+        else
+          VALID_CACHE=no
+        fi
+      fi
+    else
+     VALID_CACHE=no
+    fi
+
+    if [[ "$VALID_CACHE" = yes ]]; then
+
+      printf " %-16s  -> " $BASENAME >&3
+      printf $SCP >&4
+
+      # create the source|(binary, delta or patch) only cache
+      # from the old cache
+      if [[ -f $OLD_CACHE ]]; then
+        grep -E "^$PKG_TYPE|^src" $OLD_CACHE > $TMPDIR/make_links::cache-tmp
+      fi
+
+      # create the source|(binary, delta or patch) only cache
+      # from the new cache
+      if [[ -f $NEW_CACHE ]]; then
+        # use the cache file created by function build_cache
+        grep -E "^$PKG_TYPE|^src" $NEW_CACHE > $TMPDIR/make_links::cache-new
+      fi
+
+      # Create the repository structure
+      mckdir "$ARCHIVE_TMP_ROOT"/base
+      local CACHEDIFF
+      if [[ -r $TMPDIR/make_links::cache-tmp ]]; then
+        CACHEDIFF=$(diff -q $TMPDIR/make_links::cache-tmp $TMPDIR/make_links::cache-new)
+      else
+        CACHEDIFF="new cache"
+      fi
+
+      if [[ -n "$CACHEDIFF" ]]; then
+
+        CACHE_CHANGED_COMP_QUEUE="$CACHE_CHANGED_COMP_QUEUE $BASENAME"
+
+        if [[ "$TARGET" = server ]]; then
+          ACTION_CHANGED_COMP_QUEUE="$ACTION_CHANGED_COMP_QUEUE $BASENAME"
+        fi
+
+      else
+        # The cache did not change.  It may nevertheless be required to
+        # (re)build the apt repository.
+        if [[ "$TARGET" = server ]]; then
+
+          # Did the rpm repository change since the last run?
+          # The size from a *.bz2 file is at least 14 bytes (just bzip2 a
+          # 0 byte file => it will become 14 bytes.
+          # The file release.$BASENAME is always bigger than 0 byte, so if it
+          # is 0 bytes something must have happened to the file....
+          if [[ -r $TMPDIR/make_links::cache-tmp ]] &&
+             [[ -s "$ARCHIVE_ROOT/base/release.$BASENAME" ]] &&
+             [[ -r "$ARCHIVE_ROOT/base/srclist.$BASENAME" ]] &&
+             [[ -r "$ARCHIVE_ROOT/base/pkglist.$BASENAME" ]] &&
+             [[ -s "$ARCHIVE_ROOT/base/pkglist.$BASENAME.bz2" ]]
+          then
+
+            # Determine whether the cache has changed in a previous run
+            typeset -i TIME1
+            typeset -i TIME2
+            if [[ -f $SHAREDIR/$DISTID/cache.state ]]; then
+              TIME1=$(grep "^$BASENAME;" $SHAREDIR/$DISTID/cache.state |
+                cut -d";" -f2)
+            fi
+
+            if [[ -f $SHAREDIR/$DISTID/server.cache.state ]]; then
+              TIME2=$(grep "^$BASENAME;" $SHAREDIR/$DISTID/server.cache.state |
+                cut -d";" -f2)
+            fi
+
+            # The cache may have changed in the previous run, if the cache
+            # changed the apt repository must be recreated to reflect the
+            # the changes....
+            if [[ ${TIME2:-0} -lt ${TIME1:-0} ]]; then
+              CACHEDIFF="due to a previous run for a different target"
+              ACTION_CHANGED_COMP_QUEUE="$ACTION_CHANGED_COMP_QUEUE $BASENAME"
+            else
+
+              # User requested component rebuild?
+              if echo " $REBUILD_LINK_USER " | grep -E -q " $BASENAME | all "; then
+                CACHEDIFF="user requested component rebuild"
+              fi
+            fi
+          else
+            CACHEDIFF="rebuild component"
+          fi
+        else
+          # target is disc (CD/DVD) => always rebuild the links
+          CACHEDIFF="apt repository for disc"
+        fi
+      fi
+
+      if [[ -n "$CACHEDIFF" ]]; then
+        mckdir "$ARCHIVE_TMP_ROOT/RPMS.$BASENAME"
+        mckdir "$ARCHIVE_TMP_SRPM_ROOT/SRPMS.$BASENAME"
+
+        local SEARCHSTR
+        if [[ "$SIGNED_PKGS_ONLY" = yes ]]; then
+          SEARCHSTR=";GPG_OK"
+        else
+          SEARCHSTR=";MD5_OK"
+        fi
+
+        local -i NUM
+        local -i COUNT
+        local RPM_NAME
+        local RPM_VR
+        local RPM_ARCH
+        COUNT=$(grep -c "$SEARCHSTR" $TMPDIR/make_links::cache-new)
+        NUM=1
+        grep "$SEARCHSTR" $TMPDIR/make_links::cache-new | tr ";" " " |
+          while read RPMTYPE FILENAME RPM_NAME RPM_VR RPM_ARCH FLAGS; do
+
+            printf "${RCP}Links: %11d/%d " $NUM $COUNT >&4
+
+            DESTNAME="${RPM_NAME}-${RPM_VR}.${RPM_ARCH}.rpm"
+
+            case $RPMTYPE in
+            bin|dlt|pat)
+              #
+              # Make sure the link does not yet exist and create a unique one.
+              # This is needed in case there are several packages with
+              # the same internal name/version/release. This would cause
+              # the latest link to be overwritten (others will be lost)
+              # - this is not needed for SRPMs (and wouldn't work anyway)
+              #
+              # Relative links must be used as the links needs to remain
+              # working, if they are exported (with e.g. NFS).
+              # In this case the links are exported as they are - but all the
+              # directories passed by following that link need to be exported
+              # too! This can also happen when using FTP (FTP servers often
+              # run in an chroot() environment).
+              #
+              while [[ -L "$ARCHIVE_TMP_ROOT/RPMS.$BASENAME/$DESTNAME" ]]; do
+                DESTNAME="_$DESTNAME"
+              done
+              ln -s $REL_ARCHIVE/$FILENAME "$ARCHIVE_TMP_ROOT/RPMS.$BASENAME/$DESTNAME"
+              ;;
+
+            src)
+              DESTNAME=$ARCHIVE_TMP_SRPM_ROOT/SRPMS.$BASENAME/$DESTNAME
+              [[ -L "$DESTNAME" ]] || ln -s $REL_SRPM_ARCHIVE/$FILENAME "$DESTNAME"
+            esac
+
+            # progress indicator
+            NUM=$NUM+1
+          done
+
+        CHANGED_COMP_LIST="$(add_component $BASENAME "$CHANGED_COMP_LIST")"
+
+      else
+        # The rpm repository did not change
+        printf "Copying component... " >&4
+
+
+	# Underneath is equal to:
+        # if [[ -z $VAR ]]; then VAR=$VALUE else VAR="$VAR $VALUE" fi
+        UNCHANGED_COMP_LIST=${UNCHANGED_COMP_LIST:+$UNCHANGED_COMP_LIST }$BASENAME
+      fi
+
+      # Create a list with most recent binary rpms provided by the component
+      local LIST_MOST_RECENT=$(grep "^$ID;" $MIRRORTMP | cut -d";" -f10)
+      if [[ "$LIST_MOST_RECENT" = yes ]]; then
+
+        local REBUILD_MRLIST
+        if [[ -n "$CACHEDIFF" || "$OPT_REBUILD_MRLIST" = all ]]; then
+          REBUILD_MRLIST=yes
+        else
+          if echo " $OPT_REBUILD_MRLIST " | grep -q " $SOURCE_NAME "; then
+            REBUILD_MRLIST=yes
+          else
+            REBUILD_MRLIST=no
+          fi
+        fi
+
+        if [[ "$REBUILD_MRLIST" = yes ]]; then
+
+          # clear rest of line
+          printf "${RCP}Most recent rpm list..." >&4
+
+          @APTATELIBDIR@/compare_rpm_version --rpmtype $PKG_TYPE \
+            --format compact $NEW_CACHE |
+            bzip2 > "$ARCHIVE_TMP_ROOT/base/mrlist.$BASENAME.bz2"
+
+        else
+          if [[ -r "$ARCHIVE_ROOT/base/mrlist.$BASENAME.bz2" ]]; then
+            cp -p "$ARCHIVE_ROOT/base/mrlist.$BASENAME.bz2" "$ARCHIVE_TMP_ROOT"/base
+          fi
+        fi
+      fi # create most recent list?
+
+      # count created links, and files with correct MD5 sum/GPG signature
+      local -i GPGNUM_PKG=0
+      local -i GPGNUM_SRC=0
+      local -i MD5NUM_PKG=0
+      local -i MD5NUM_SRC=0
+      local -i MD5NUM_FAIL=0
+      GPGNUM_PKG=$(grep -c "^$PKG_TYPE.*;GPG_OK" $TMPDIR/make_links::cache-new)
+      GPGNUM_SRC=$(grep -c "^src.*;GPG_OK" $TMPDIR/make_links::cache-new)
+      MD5NUM_PKG=$(grep -c "^$PKG_TYPE.*;MD5_OK" $TMPDIR/make_links::cache-new)
+      MD5NUM_SRC=$(grep -c "^src.*;MD5_OK" $TMPDIR/make_links::cache-new)
+
+      if [[ "$PKG_TYPE" = bin ]]; then
+        MD5NUM_FAIL=$(grep -c ";MD5_FAILED;" $TMPDIR/make_links::cache-new)
+      fi
+
+      # print some statistics
+      printf "$RCP$CLEOL" >&4
+      printf "%s: MD5/GPG: %4d/%d\n" $PKG_TYPE_STR $MD5NUM_PKG $GPGNUM_PKG >&3
+
+      ( printf "                  "
+        printf " -> Src: MD5/GPG: %4d/%d\n" $MD5NUM_SRC $GPGNUM_SRC
+      ) >&3
+
+      if [[ $MD5NUM_FAIL -gt 0 ]]; then
+        # Report the number of MD5 failures for this cache, include the
+        # component name, for users to grep on "MD5FAIL".  The component
+        # name will be included in the grepped line.
+        ( printf " %-16s  >> " $BASENAME
+          printf "     MD5FAIL: %4d\n" $MD5NUM_FAIL
+        ) >&3
+      fi
+    fi # valid cache?
+
+    # clean up
+    if [[ "$PATCH_TYPE" = security ]]; then
+      rm -f $NEW_CACHE $OLD_CACHE
+    fi
+
+    rm -f $TMPDIR/make_links::cache-tmp $TMPDIR/make_links::cache-new
+  done
+}
+
+function mckdir()
+#################
+{
+  #
+  # mckdir: make check dir
+  #
+  local DIR2CREATE=$1
+
+  mkdir -p "$DIR2CREATE" 2>/dev/null
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to create directory: $DIR2CREATE" >&2
+    apt_exit $ERR_DIR
+  fi
+}
+
+function chkvar ()
+##################
+{
+  local VNAME=$1
+  local STR="$3"
+
+  if [[ -n "$STR" ]]; then
+
+    local INVEST_STR
+
+    # Allowed non alphanumeric characters
+    # The quotes around $STR are required to be able to detect an "*"
+    INVEST_STR=$(echo "$STR" | tr -d "[\-_.]")
+
+    if [[ "$2" = dir ]]; then
+      INVEST_STR=$(echo "$INVEST_STR" | tr -d "/")
+    fi
+
+    echo "$INVEST_STR" | grep -q [[:punct:]]
+
+    if [[ $? -eq 0 ]];  then
+      ( echo "error: variable $VNAME contains invalid characters."
+        echo -n " Allowed characters are: alphanumeric -_./ (\"/\" for "
+        echo "directories only)."
+        echo " Current value of $VNAME is: $STR"
+        echo " Check configuration file: $CONFIG_FOUND"
+      ) >&2
+      apt_exit $ERR_CONFIGURATION
+    fi
+  else
+    ( echo "error: variable $VNAME is not set."
+      echo " Check configuration file: $CONFIG_FOUND"
+    ) >&2
+    apt_exit $ERR_CONFIGURATION
+  fi
+}
+
+function add_component()
+########################
+{
+  local COMP_NAME=$1
+  local COMP_LIST="$2"
+
+    # void duplicate entries
+    echo "$COMP_LIST" | grep -q "[[:space:]]$COMP_NAME[[:space:]]"
+    if [[ $? -ne 0 ]]; then
+
+      ( echo "Archive: stable"
+        echo "Component: $1"
+        echo "Origin: $DIST"
+        echo "Label: $DIST"
+        echo "Version: $VERSION"
+        echo "Architecture: $ARCH"
+        echo -n "Timestamp: "
+        LANG=C date
+      ) > "$ARCHIVE_TMP_ROOT/base/release.$COMP_NAME"
+
+      if [ -z "$COMP_LIST" ]; then
+        echo "$COMP_NAME"
+      else
+        echo "$COMP_LIST $COMP_NAME"
+      fi
+    fi
+}
+
+function var_debug_info()
+#########################
+{
+  local VAR
+
+  for VAR in $@
+  do
+    eval echo "DEBUG: $VAR=\$$VAR"
+  done | sort
+}
+
+function audit_component()
+##########################
+{
+  local TYPE=$1
+  local COMP=$2
+  local DIR=$3
+
+  # genpkglist/gensrclist is in trouble, let's see if aptate can find the
+  # the guilty one(2)....
+  ( echo 
+    echo "  Could not create the apt $TYPE database for component \"$COMP\""
+    echo "  successfully.  This might be due to an inconsistent component cache."
+    echo
+    echo "  Auditing links in \"$DIR\""
+  ) >&2
+
+  local REPLACE_STR
+  if [[ "$TYPE" = pkg ]]; then
+    REPLACE_STR=$REL_ARCHIVE
+  else
+    REPLACE_STR=$REL_SRPM_ARCHIVE
+  fi
+
+  local FILES
+  cd $DIR
+  FILES=$(find . -follow 2>&1 >/dev/null | cut -d: -f2)
+
+  local FILE
+  for PKG in $FILES; do
+
+    FILE=$(ls -l $(basename $PKG) | awk '{print $NF}' |
+      sed s+$REPLACE_STR/++)
+    echo -n "  error: file with incorrect linkage.  "
+    grep -q ${FILE:-^$} $TMPDIR/build_cache::cache.$COMP
+    if [[ $? -eq 0 ]]; then
+      echo "File found in cache."
+    else
+      echo "File not found in cache."
+    fi
+    echo "    File = $FILE"
+  done
+
+  ( echo 
+    echo -n "  Rerunning $PRGNAME once more might fix it.  If rerunning "
+    echo "$PRGNAME does not"
+    echo "  resolve the problem run $PRGNAME with argument \"--rebuild-comp $COMP\"."
+  ) >&2
+}
+
+function bzip2_checked()
+########################
+{
+  local FILE=$1
+
+  bzip2 -c "$FILE" > "$FILE".bz2
+
+  if [[ $? -ne 0 ]]; then
+    ( echo
+      echo "error: bzip2 did not finish successfully."
+      echo " Correct the error (full filesystem?) and rerun $PRGNAME."
+    ) >&2
+    apt_exit $ERR_BZIP2
+  fi 
+}
+
+function cache_adm()
+####################
+{
+  local TYPE=$1; shift
+  local DATE=$1; shift
+  local COMPONENTS=$@
+
+  local COMPONENT
+  local STATE_FILE
+
+  if [[ "$TYPE" = common ]]; then
+    STATE_FILE=$SHAREDIR/$DISTID/cache.state
+  else
+    STATE_FILE=$SHAREDIR/$DISTID/$TYPE.cache.state
+  fi
+
+  for COMPONENT in $COMPONENTS
+  do
+    if [[ -r $STATE_FILE ]]; then
+      grep -v "^$COMPONENT;" $STATE_FILE > $TMPDIR/main::cache.state
+    fi
+
+    ( [[ -r $TMPDIR/main::cache.state ]] && cat $TMPDIR/main::cache.state
+      echo "$COMPONENT;$DATE"
+
+    ) > $STATE_FILE
+
+  done
+  rm -f $TMPDIR/main::cache.state
+}
+
+function full_path()
+#################
+{
+  cd "$(dirname "$1")"
+  echo $PWD/$(basename "$1")
+}
+
+function usage()
+#################
+{
+  ( echo "$SHORTHELP"
+    echo "See $PRGNAME --help for extended help."
+  ) >&2
+  exit 0
+}
+
+function help ()
+################
+{
+  cat << EOF >&1
+Usage: $PRGNAME [options]
+Options:
+   -h           print short help and exit.
+  --help        print this help and exit.
+   -V, --version
+   -q <q|qqqqqq>, --quiet   <q|qqqqqq>
+   -v <v|vvvvvv>, --verbose <v|vvvvvv>
+
+  --dist-id <distribution id,distribution id-2,...>
+
+  --bad-rpms-mode <report-only|rename>
+  --check-config
+  -c <config files>
+  --config-file <config file>
+  --debug
+  --force
+  --rebuild-comp   <all|component-name,...,component-name>
+  --rebuild-links  <all|component-name,...,component-name>
+  --rebuild-mrlist <all|component-name,...,component-name>
+  --scan-rpm-dir   <component-name,...,component-name>
+  --test
+  --topdir <repository directory>
+  --update-rpms, --no-update-rpms
+
+Report bugs to <@PACKAGE_BUGREPORT@>.
+EOF
+}
+
+##############################
+########## CONFIG ############
+##############################
+
+# These variables must be readonly, to prevent them to be
+# overwritten by the processing of the config files
+# Have a restricted path variable as this application will be run by root
+# though this is not required.
+unset    PATH
+export   PATH
+readonly PATH=/bin:/usr/bin
+readonly PRGNAME=$(basename $0)
+readonly PRGVRSN=@PACKAGE_VERSION@
+
+# Define the exit (error) codes
+# Don't use exit value 1, as 1 is used by bash to signal that the
+# application has an error (crash).
+readonly ERR_CONFIGURATION=2
+readonly ERR_NO_COMPONENTS=3
+readonly ERR_DIR=4
+readonly ERR_ARGUMENT=5
+readonly ERR_SYSTEM=6
+readonly ERR_REPOSITORY=7
+readonly ERR_BZIP2=8
+readonly ERR_ASSERT=9
+readonly ERR_LOCKED=10
+readonly ERR_TRAP=129
+
+# default settings
+# most of the default values are being determined by aptate's dtd
+ARCH=""
+DIST=""
+KEY_NAME=""
+KEY_EMAIL=""
+TOPDIR=""
+VERSION=""
+
+readonly SHORTHELP="Usage: $PRGNAME [-h] [-V] [-q <q|qqqqqq>] [-v <v|vvvvvv>]
+  [--dist-id <dist-id,dist-id>] [--config-file <config file>] [--debug]
+  [--check-config] [--test] [--bad-rpms-mode <report-only|rename>]
+  [--(no-)update-rpms] [--topdir <repository directory>] [--force]
+  [--rebuild-comp   <all|component-name,...,component-name>]
+  [--rebuild-links  <all|component-name,...,component-name>]
+  [--rebuild-mrlist <all|component-name,...,component-name>]
+  [--scan-rpm-dir <component-name,...,component-name>
+  [--help] [--version] [--quiet <q|qqqqqq>] [--verbose <v|vvvvvv>]"
+
+# Command line argument parsing, the allowed arguments are
+# alphabetically listed, keep it this way please.
+LOPT="action:,bad-rpms-mode:,config-file:,check-config,debug,dist-id:,force"
+LOPT="${LOPT},help,no-update-rpms,quiet:,rebuild-comp:,rebuild-links:"
+LOPT="${LOPT},rebuild-mrlist:,scan-rpm-dir:,test,topdir:,update-rpms,verbose:"
+LOPT="${LOPT},version"
+
+# Note that we use `"$@"' to let each command-line parameter expand to a
+# separate word. The quotes around `$@' are essential!
+# We need TEMP as the `eval set --' would nuke the return value of getopt.
+TEMP=$(getopt --options=c:q:hv:V --long $LOPT -n $PRGNAME -- "$@")
+
+if [[ $? -ne 0 ]]; then
+  echo "Terminating..." >&2
+  exit $ERR_ARGUMENT
+fi
+
+# Note the quotes around `$TEMP': they are essential!
+eval set -- "$TEMP"
+
+while true
+do
+  case $1 in
+  --action)              OPT_ACTION=$2; shift;;
+  --bad-rpms-mode)       OPT_BAD_RPMS_MODE=$2; shift;;
+  --check-config)        OPT_CHECKCONFIG=yes;;
+  --config-file|-c)      OPT_CONFIGFILE=$2; shift;;
+  --debug)               OPT_DEBUG=yes;;
+  --dist-id)             OPT_DISTID="$OPT_DISTID $2"; shift;;
+  --force)               OPT_FORCE=yes;;
+  --help)                help; exit;;
+   -h)                   usage; exit;;
+  --no-update-rpms)      OPT_UPDATE_RPMS=no;;
+  --quiet|-q)            OPT_QUIET=$(echo "$2"| tr -dc q)
+                         if [[ "$OPT_QUIET" != "$2" ]]; then
+                           echo "error: invalid argument to --quiet"
+			   exit $ERR_ARGUMENT
+		         fi
+		         shift;;
+  --rebuild-comp)        OPT_REBUILD_COMP=$2; shift;;
+  --rebuild-links)       OPT_REBUILD_LINK=$2; shift;;
+  --rebuild-mrlist)      OPT_REBUILD_MRLIST=$2; shift;;
+  --scan-rpm-dir)        OPT_SCAN_RPM_DIR=$2, shift;;
+  --test)                OPT_TEST=yes;;
+  --topdir)              OPT_TOPDIR=$2; shift;;
+  --update-rpms)         OPT_UPDATE_RPMS=yes;;
+  --version|-V)          echo "$PRGNAME version: $PRGVRSN"; exit;;
+  --verbose|-v)          OPT_VERBOSE=$(echo "$2"| tr -dc v)
+                         if [[ "$OPT_VERBOSE" != "$2" ]]; then
+                           echo "error: invalid argument to --verbose"
+			   exit $ERR_ARGUMENT
+		         fi
+		         shift;;
+  --)                    shift; break;;
+   *)                    echo "unknow argument \"$1\""; exit $ERR_ARGUMENT;;
+  esac
+  shift
+done
+
+#
+# Define output streams.  Define them here as they are used in the
+# function apt_exit, which can be called shortly from this point.
+#
+exec 3>/dev/null # progress markers
+exec 4>/dev/null # progress markers containing ANSI characters
+exec 5>/dev/null # Read 'config file' message
+exec 6>/dev/null # debug output
+
+#
+# Configuration file selection: look for configuration files specified by the
+# CONFIG_FILES variable.  As soon as a configuration file is found, stop
+# looking for any other.  One could argue that another approach that allows
+# configuration values to be overwritten as nicer, but that won't work with
+# xml formatted configuration files.  The reason is that the default values
+# for the variables are determined by the DTD, which is applied to all
+# the config files.
+#
+# At last the command line argument values are being applied
+#
+unset CONFIG_FOUND
+APTATE_CONF_PATH="$HOME/.aptate:@APTATECONFDIR@"
+
+if [[ -n "$OPT_CONFIGFILE" ]]; then
+  if [[ -f "$OPT_CONFIGFILE" ]]; then
+    CONFIG_FOUND="$OPT_CONFIGFILE"
+  else
+    echo " No such file $OPT_CONFIGFILE" >&2
+    apt_exit $ERR_CONFIGURATION
+  fi
+else
+  save_IFS=$IFS; IFS=:
+  for DIR in $APTATE_CONF_PATH; do
+    if [[ -f "$DIR/aptate.conf" ]]; then
+      CONFIG_FOUND=$DIR/aptate.conf
+      break
+    fi
+  done
+  IFS=$save_IFS
+  if [[ -z "$CONFIG_FOUND" ]]; then
+    ( echo "error: Missing aptate.conf."
+      echo " (Search path: $APTATE_CONF_PATH)"
+    ) >&2
+
+    apt_exit $ERR_CONFIGURATION
+  fi
+fi
+
+
+XMLOUT=$(xmllint --valid --noout "$CONFIG_FOUND" 2>&1)
+
+if [[ -z "$XMLOUT" ]]; then
+  if [[ "$OPT_CHECKCONFIG" = yes ]]; then
+    echo "The configuration file is correct"
+    apt_exit 0
+  fi
+else
+  ( echo "The configuration file is incorrect, the errors are:"
+    echo
+    echo "$XMLOUT"
+  ) >&2
+
+  apt_exit $ERR_CONFIGURATION
+fi
+
+# Check the perl installation, mainly the required/needed perl XML
+# modules.  Do this with a known good configuration file.
+# Any error is than due to an incorrect system configuration (missing
+# perl-XML module).  Some people may find this not the right the place
+# for this check (it could be done with e.g. a make test, or checked by
+# configure).
+perl -I${APTATE_PERLLIBDIR} -MAptate::Config \
+  -e "ActionConfig('@APTATEDATADIR@/ref.conf')" > /dev/null
+case $? in
+  0) # All seems well
+     ;;
+  *) ( echo "error: incorrect perl configuration"
+       echo "Perhaps some missing perl modules?  The required modules are:"
+       echo "XML::LibXML-Common"
+       echo "XML::NamespaceSupport"
+       echo "XML::SAX"
+       echo "XML::GDOME"
+       echo "XML::LibXML"
+     ) >&2
+     apt_exit $ERR_SYSTEM
+     ;;
+esac
+
+# The system configuration seem okay.  All subsequent errors will be
+# considered as application errors.
+typeset -i VERBOSE
+CONFIG=$(perl -I${APTATE_PERLLIBDIR} -MAptate::Config \
+  -e "ActionConfig('$CONFIG_FOUND')" )
+case $? in
+  0) eval $CONFIG
+     # A full path to the configuration is required as somewhere in the
+     # program the current working is changed.  If aptate is called like,
+     # aptate --config conf.xml the call to aptate-config later on fails.
+     CONFIG_FOUND=$(full_path "$CONFIG_FOUND")
+     ;;
+  1) echo "error: incorrect config file \"$CONFIG_FOUND\"" >&2
+     apt_exit $ERR_CONFIGURATION
+     ;;
+  2) # The error is handled in the perl module Aptate/Config.pm already.
+     # No need to do it here, just exit.
+     apt_exit $ERR_CONFIGURATION
+     ;;
+  *) echo "error: incorrect configuration" >&2
+     apt_exit $ERR_CONFIGURATION
+     ;;
+esac
+
+if [[ -n "$OPT_QUIET" ]] && [[ -n "$OPT_VERBOSE" ]]; then
+  echo "error: --quiet and --verbose can't be used simulteanously" >&2
+  apt_exit $ERR_ARGUMENT
+fi
+
+readonly DEBUG_LEVEL=5
+if [[ -n "$OPT_DEBUG" ]]; then
+  # Debug mode: show everything we have...
+  VERBOSE=$DEBUG_LEVEL
+fi
+
+declare -i NUM
+NUM=$(echo "$OPT_VERBOSE" | wc -c)
+VERBOSE=$VERBOSE+$NUM
+
+NUM=$(echo "$OPT_QUIET"   | wc -c)
+VERBOSE=$VERBOSE-$NUM
+
+#
+# define which output streams are being written used
+# default VERBOSE level is 3:
+#  - no debug output and no "Read config file" message
+#
+if [[ $VERBOSE -ge 1 ]]; then
+  # allow error message (exec 2>&2)
+
+  if [[ $VERBOSE -ge 2 ]]; then
+    # display progress messages
+    exec 3>&2
+
+    if [[ "$VERBOSE" -ge 3 ]]; then
+      # display progress counters
+      exec 4>&2
+
+      if [[ "$VERBOSE" -ge 4 ]]; then
+        # display the "Read config file" message
+        exec 5>&2
+
+        if [[ "$VERBOSE" -ge $DEBUG_LEVEL ]]; then
+          # display debug output (echo of variables values)
+          exec 6>&2
+
+            # when collecting debug output the progress markers are unwanted in
+            # the debug output stream which is standard error or &2
+            exec 4>&1
+
+            echo "DEBUG: verbose level = $VERBOSE" >&6
+
+          if [[ "$VERBOSE" -gt $DEBUG_LEVEL ]]; then
+            ( echo "DEBUG: _warning_ temporarly directories will not be removed"
+              echo -n "DEBUG: this may prevent subsequent $PRGNAME instances "
+              echo "to run."
+            ) >&6
+          else
+            if [[ -z "$OPT_VERBOSE" ]]; then
+              ( echo "DEBUG: it's possible to obtain more information by"
+                echo "DEBUG: increasing the verbose level (-vv)."
+              ) >&6
+            fi
+          fi
+        fi
+      fi
+    fi
+  fi
+else
+  # surpress error messages
+  exec 2>/dev/null
+fi
+
+#
+# Show the parsed config file.  Do it only here and not earlier as only
+# at this location the quiet level has been determined and set
+#
+echo "Using configuration file: \"$CONFIG_FOUND\"" >&5
+
+VARS="OPT_ACTION OPT_BAD_RPMS_MODE OPT_CONFIGFILE OPT_DEBUG OPT_DISTID"
+VARS="$VARS OPT_FORCE OPT_UPDATE_RPMS OPT_QUIET OPT_REBUILD_COMP OPT_VERBOSE"
+VARS="$VARS OPT_REBUILD_LINK OPT_REBUILD_MRLIST OPT_TEST OPT_TOPDIR"
+
+( echo "DEBUG: === arguments ==="
+  var_debug_info $VARS
+) >&6
+
+( echo "DEBUG: === global configuration information ==="
+  echo "$CONFIG" | sort | sed 's+^+DEBUG: +'
+) >&6
+
+if [[ "$FLAT" = no && "$OPT_TEST" = yes ]]; then
+  echo "error: --test is available for flat apt repositories only" >&2
+  apt_exit $ERR_ARGUMENT
+fi
+
+[[ -n "$OPT_TOPDIR"           ]] && TOPDIR=$OPT_TOPDIR
+[[ -n "$OPT_UPDATE_RPMS"      ]] && UPDATE_RPMS=$OPT_UPDATE_RPMS
+
+# check the variable TOPDIR for meta characters, as directories
+# are created with it (the variable may neither be empty).
+# The quotes around TOPDIR are requires to detect an "*".
+chkvar TOPDIR dir "$TOPDIR"
+TOPDIR=$(echo "$TOPDIR" | tr -s "/" | sed s+/$++)
+readonly TOPDIR
+readonly REP_DIR="$TOPDIR$REPDIR"
+
+# Check the top level directories
+if [[ -d "$REP_DIR" ]]; then
+  if [[ ! -w "$REP_DIR" ]]; then
+     ( echo "error: shared apt directory is not writable"
+       echo " Run $PRGNAME as different user or change the directory permissions."
+       echo " Current value: $REP_DIR"
+     ) >&2
+     apt_exit $ERR_DIR
+  fi
+else
+  if [[ -d "$TOPDIR" ]]; then
+    if [[ -w "$TOPDIR" ]]; then
+      mckdir "$REP_DIR"
+    else
+       ( echo "error: top level directory is not writable."
+         echo " This is needed to create the directory $REP_DIR."
+         echo -n " Run $PRGNAME as different user, change the directory "
+         echo "permissions or "
+         echo " create the directory with the right permissions yourself."
+         echo " Current value: $TOPDIR"
+       ) >&2
+       apt_exit $ERR_DIR
+    fi
+  else
+    ( echo "error: incorrect apt/rpm repository directory."
+      echo " current value: $TOPDIR"
+    ) >&2
+    apt_exit $ERR_CONFIGURATION
+  fi
+fi
+
+# Aptate's absolute share directory.
+chkvar SHAREDIR dir "$SHAREDIR"
+readonly SHAREDIR
+
+[[ -d $SHAREDIR ]] || mckdir $SHAREDIR
+
+if [[ "$SIGN" = yes ]] || [[ "$SIGNED_PKGS_ONLY" = yes ]]; then
+
+  # check for gpg
+  GPG_INSTALLED=no
+
+  # Is gpg installed?
+  # The redirect ">& /dev/null" means that all output streams are being
+  # redirected to /dev/null
+  if type gpg >& /dev/null; then
+    # Is gpg configured?
+    gpg --list-keys ${KEY_EMAIL:-joe@us.er} >& /dev/null
+    if [[ $? -eq 0 ]]; then
+      GPG_INSTALLED=yes
+    else
+      ( echo "error: GPG not configured."
+        echo " No GPG key for user \"$KEY_EMAIL\"."
+      ) >&2
+    fi
+  else
+    echo "error: GPG not installed." >&2
+  fi
+
+  if [[ "$GPG_INSTALLED" = no ]]; then
+    # provide additional information
+    if [[ "$SIGN" = yes ]]; then
+      echo "This is required for a gpg signed apt repository." >&2
+    fi
+
+    if [[ "$SIGNED_PKGS_ONLY" = yes ]]; then
+      echo "This is required to accept gpg signed rpm packages." >&2
+    fi
+
+    apt_exit $ERR_SYSTEM
+  fi
+fi
+
+# create database with extended (bloated) information?
+if [[ "$BLOAT" = yes ]]; then
+  BLOAT=--bloat
+else
+  unset BLOAT
+fi
+
+# should we put SRPMS besides RPMS?
+if [[ "$FLAT" = yes ]]; then
+  GENSRCLIST_ARG_FLAT=--flat
+  SRPMDIR=""
+else
+  unset GENSRCLIST_ARG_FLAT
+  SRPMDIR="/.."
+fi
+
+# should we follow symbolic links when searching
+# for SRPMS/RPMS? Caution - this may be dangerous!
+if [[ "$FOLLOW" = yes ]]; then
+  FOLLOW="-follow -xtype f"
+else
+  unset FOLLOW
+fi
+
+case $OPT_BAD_RPMS_MODE in
+
+  report-only)
+    BAD_RPMS_MODE="report-only"
+    ;;
+
+  rename)
+    BAD_RPMS_MODE="rename"
+    ;;
+  "")
+    # BAD_RPMS_MODE=$BAD_RPMS_MODE
+    # BAD_RPMS_MODE is assigned the default value, which has been set
+    # while parsing the configuration file
+    ;;
+  *)
+    ( echo "error: incorrect value \"$OPT_BAD_RPMS_MODE\" specified for --bad-rpm-mode"
+      echo " valid values are: report-only and rename."
+    ) >&2
+
+    apt_exit $ERR_ARGUMENT
+    ;;
+esac
+
+case $OPT_ACTION in
+
+  # server|cd|dvd)
+  server)
+    TARGET=$OPT_ACTION
+    MK_REP=yes
+    ;;
+
+  mirror)
+    TARGET=$OPT_ACTION
+    MK_REP=no
+    ;;
+
+  "")
+    TARGET=server
+    MK_REP=yes
+    ;;
+
+  *)
+    ( echo "error: incorrect value specified for argument --action"
+      # FIXME:
+      # echo "  supported values are: server, cd, dvd and mirror (default: server)"
+      echo " supported values are: server and mirror (default: server)"
+      echo " current value: $OPT_ACTION"
+    ) >&2
+
+    apt_exit $ERR_ARGUMENT
+esac
+
+# escape sequences
+readonly ESC=$(echo -en "\033")
+# ESC: save cursor position
+readonly SCP="$ESC"7
+# ESC: restore cursor position
+readonly RCP="$ESC"8
+# ESC: clear from cursor to eol
+readonly CLEOL="$ESC\1330K"
+
+VARS="TOPDIR SIGN KEY_NAME KEY_EMAIL OLD_HASHFILE BAD_RPMS_MODE SHAREDIR"
+VARS="$VARS BLOAT FLAT FOLLOW UPDATE_RPMS MK_SEC_COMP SIGNED_PKGS_ONLY"
+VARS="$VARS WGET_WAIT WGET_TRIES VERBOSE"
+VARS="$VARS MK_PATCH_RPM_COMP TARGET MK_REP"
+
+( echo "DEBUG: === processed argument options ==="
+  var_debug_info $VARS
+) >&6
+
+trap 'apt_exit_on_trap' HUP INT QUIT TERM EXIT
+
+TMPDIR=$(mktemp -d /tmp/aptate.XXXXXX)
+if [[ $? -ne 0 ]]; then
+  echo "error: temp directory creation failed" >&2
+  apt_exit $ERR_DIR
+fi
+
+if [[ -n "$OPT_DISTID" ]]; then
+  for DISTRO in $(echo $OPT_DISTID | tr "," " ")
+  do
+    DIST=$(perl -I${APTATE_PERLLIBDIR} -MAptate::Config \
+       -e "ActionQuery('$CONFIG_FOUND', 'attribute::id=\'$DISTRO\'')")
+    DISTROS="$DISTROS $DIST"
+  done
+  # remove the spaces at the beginning of line, this is needed for the 
+  # if [[ -n .. ] statement below
+  DISTROS=$(echo $DISTROS | sed s/^[[:blank:]]*//)
+
+else
+  DISTROS=$(perl -I${APTATE_PERLLIBDIR} -MAptate::Config \
+       -e "ActionQuery('$CONFIG_FOUND', 'attribute::process=\'yes\'')")
+fi
+
+if [[ -n "$DISTROS" ]]; then
+
+  echo "Distribution(s) to be processed: $DISTROS" >&3
+
+else
+
+  if [[ -n "$OPT_DISTID" ]]; then
+    echo "error: no valid distribution(s) provided (${OPT_DISTID## })" >&2
+  else
+    echo "error: no valid distribution(s) found" >&2
+  fi
+
+  # Find all available (process = "no|yes") distribution ids
+  DISTROS=$(perl -I${APTATE_PERLLIBDIR} -MAptate::Config \
+     -e "ActionQuery('$CONFIG_FOUND','')");
+
+  if [[ -n "$DISTROS" ]]; then
+    # Provide 2 different error msg depending on the number of available
+    # distributions.
+    if [[ $(echo "$DISTROS" | wc -w) -ne 1 ]]; then
+      echo " Choose from the following available distributions: $DISTROS" >&2
+    else
+      echo " The following distribution is available: $DISTROS" >&2
+    fi
+  fi
+
+  # If the distribution processing is de-activated (the distribution tag
+  # attribute::process = "no")?  To activate the processing of the distribution,
+  # use the --dist-id argument or make the process attribute value = "yes".
+  DISTROS=$(perl -I${APTATE_PERLLIBDIR} -MAptate::Config \
+    -e "ActionQuery('$CONFIG_FOUND','attribute::process=\'no\'')")
+
+  if [[ -n "$DISTROS" ]]; then
+    ( echo -n " Note: the following distribution(s) will not be processed if "
+      echo "not explicitely"
+      echo "       called with --dist-id: $DISTROS"
+    ) >&2
+  fi
+
+  if [[ -n "$OPT_DISTID" ]]; then
+    apt_exit $ERR_ARGUMENT
+  else
+    apt_exit $ERR_CONFIGURATION
+  fi
+fi
+
+# Determine rpm version.  rpm version 3 does not provide the
+# --nosignature option
+if rpm --version | grep -q [[:blank:]]3\.; then
+	RPM_NOSIGNATURE_ARG=""
+else
+	RPM_NOSIGNATURE_ARG="--nosignature"
+fi
+
+for DISTID in $DISTROS; do
+
+  echo "Processing: $DISTID" >&3
+  cd "$TOPDIR"
+
+  if [[ ! -d $SHAREDIR/$DISTID ]]; then
+    mckdir $SHAREDIR/$DISTID
+  fi
+  
+  LOCK=$SHAREDIR/$DISTID/lock
+
+  # Check if another aptate instance is running for the same DISTID.
+  if [[ -s $LOCK ]]; then
+
+    # Check if the process id stored in the lock file is actually active
+    # The sed hack makes the grep command for itself invisble.
+    # ps x -o pid= shows only the pid for all running processes.  The "="
+    # sign prevents the header to be printed.
+    if ps ax -o pid= | grep -qw $(cat $LOCK | sed 's,\([0-9]\),\[\1\],'); then 
+      ( printf "warning: other $PRGNAME instance for distid $DISTID "
+        echo "active"
+      )>&3
+
+      LOCKED_DISTIDS=${LOCKED_DISTIDS:+$LOCKED_DISTIDS }$DISTID
+      continue
+    else
+      # The lock refers to a finished/died aptate instance, the lock is
+      # no longer valid
+      # Remove -f the lock as it has r--r--r-- permissions
+      rm -f $LOCK
+    fi
+  fi
+
+  # Use umask to prevent race condition problems
+  CURR_UMASK=$(umask)
+  umask 0222
+  if echo $$ 2>/dev/null > $LOCK; then
+    # The lock has been created,  restore the old umask.
+    umask $CURR_UMASK
+  else
+    # Another process was just a little quicker...
+    ( printf "warning: another $PRGNAME instance for distid $DISTID "
+      echo "is already active"
+    )>&3
+
+    umask $CURR_UMASK
+    continue
+  fi
+
+  # In the update directory, the mirrored packages will be stored
+  UPDATEDIR=$SHAREDIR/$DISTID/update
+
+  # The log directory holds the logfiles that are being created during the
+  # mirroring of the packages
+  UPDATE_LOG_DIR=$SHAREDIR/$DISTID/log
+
+  # convert the xml formatted distribution part of the config file to something
+  # bash can easily process
+  MIRRORTMP=$TMPDIR/main::mirror_$DISTID
+
+  perl -I${APTATE_PERLLIBDIR} -MAptate::Config \
+    -e "ActionMirror('${CONFIG_FOUND}','$DISTID','${UPDATEDIR}')" \
+    > $MIRRORTMP
+  if [[ $? -ne 0 ]]; then
+    echo "error: incorrect configuration file \"$CONFIG_FOUND\"" >&2
+    apt_exit $ERR_CONFIGURATION
+  fi
+
+  ( echo "DEBUG: === component information ==="
+    cat $MIRRORTMP
+  ) >&6
+
+            IDS=$(cut -d";" -f1  $MIRRORTMP)
+   SOURCE_NAMES=$(cut -d";" -f2  $MIRRORTMP)
+        METHODS=$(cut -d";" -f3  $MIRRORTMP)
+  UPD_RPM_COMPS=$(cut -d";" -f4  $MIRRORTMP)
+    SOURCE_URLS=$(cut -d";" -f5  $MIRRORTMP)
+    SEARCH_DIRS=$(cut -d";" -f6  $MIRRORTMP)
+
+  declare -i NAMESNUM
+  declare -i URLSNUM
+  NAMESNUM=$(echo $SOURCE_NAMES | wc -w)
+   URLSNUM=$(echo $SOURCE_URLS  | wc -w)
+  if [[ $NAMESNUM -eq 0 ]]; then
+    echo "No uri's found, check mirrorlist file: \"$CONFIG_FOUND\"" >&2
+    apt_exit $ERR_CONFIGURATION
+  else
+    if [[ $NAMESNUM -ne $URLSNUM ]]; then
+      ( echo -n "The number of names ($NAMESNUM) and uri's ($URLSNUM) "
+        echo "are not balanced"
+        echo "check the distribution part of the configuration file: \"$CONFIG_FOUND\""
+        echo "Available names:"
+        echo "${SOURCE_NAMES}" | sed 's+^+  +'
+        echo
+        echo "Available uri's:"
+        echo "${SOURCE_URLS}"  | sed 's+^+  +'
+
+      ) >&2
+      apt_exit $ERR_CONFIGURATION
+    fi
+  fi
+
+  if $(echo " $SOURCE_NAMES " | grep -q " security ");then
+    echo "error: \"security\" is a reserved $PRGNAME repository name" >&2
+    apt_exit $ERR_CONFIGURATION
+  fi
+
+  if [[ "$TARGET" = "mirror" ]]; then
+
+    # Is the mirror action in line with the update rpms setting?
+    # It is, of course, possible to overrule the update rpms setting, but it
+    # is better to let the user do this. 
+    if [[ "$UPDATE_RPMS" = no ]]; then
+
+      ( echo -n "error: use --update-rpms to override the configuration "
+        echo "setting: update-rpms=no"
+        echo " Check configuration file: $CONFIG_FOUND"
+      ) >&2
+
+      apt_exit $ERR_ARGUMENT
+    fi
+  fi
+
+  if [[ "$UPDATE_RPMS" = yes ]]; then
+
+    echo "Entering mirror stage" >&4
+
+    NUMS=$(awk -F\; '{
+      # find the components that are configured to be updated.
+      # $3 = method
+      # $4 = update allowed
+      if ( $4 == "yes" && ( $3 == "ftp" || $3 == "script" ))  print $1
+    }' $MIRRORTMP)
+
+    if [[ -z "$NUMS" ]]; then
+      echo "There are no components to be mirrored" >&3
+    else
+      for NUM in $NUMS; do
+        METHOD=$(echo $METHODS | awk "{ print \$$NUM }" )
+        SOURCE_NAME=$(echo $SOURCE_NAMES | awk "{ print \$$NUM }" )  
+
+        if [[ "$METHOD" = ftp || "$METHOD" = script ]]; then
+          printf " %-20s Upd: " $SOURCE_NAME >&3
+
+          case $METHOD in
+            ftp)
+              SOURCE_URL=$(echo $SOURCE_URLS | awk "{ print \$$NUM }" )  
+              mirror $NUM $SOURCE_NAME $SOURCE_URL $UPDATE_LOG_DIR
+              RET=$?
+              ;;
+
+            script)
+              @APTATELIBDIR@/methods/script --distribution=$DISTID \
+                --component=$SOURCE_NAME "$CONFIG_FOUND" >&6
+              RET=$?
+              ;;
+
+            *)
+              # programmer error
+              echo "error: unknow method" >&2
+              apt_exit $ERR_ASSERT
+          esac
+
+          if [[ $RET -eq 0 ]]; then
+            printf "OK  \n" >&3
+          else
+            printf "Err \n" >&3
+          fi
+        fi
+      done
+    fi
+  fi
+
+  if [[ "$MK_REP" = yes ]]; then
+    CONFIG=$(perl -I${APTATE_PERLLIBDIR} -MAptate::Config \
+      -e "ActionDist('$CONFIG_FOUND','$DISTID')")
+    if [[ $? -ne 0 ]]; then
+      echo "error: incorrect configuration file \"$CONFIG_FOUND\"" >&2
+      apt_exit $ERR_CONFIGURATION
+    fi
+    eval $CONFIG
+
+    DISTATTRS=$(perl -I${APTATE_PERLLIBDIR} -MAptate::Config \
+      -e "ActionDistAttrs('$CONFIG_FOUND','$DISTID')") 2>&2 || apt_exit $ERR_CONFIGURATION
+    eval $DISTATTRS
+
+    if [[ "$TARGET" != server ]]; then
+      # It does not make sense, to provide patch rpms together with the 
+      # regular rpms on a cd/dvd disc set.
+      MK_PATCH_RPM_COMP=no
+
+      # The same is valid for rpms that have been marked as security rpms.
+      # These rpms will be provided by the regular (other) apt components.
+      MK_SEC_COMP=no
+    fi
+
+    VARS="TOPDIR SIGN KEY_NAME KEY_EMAIL OLD_HASHFILE BAD_RPMS_MODE SHAREDIR"
+    VARS="$VARS BLOAT FLAT FOLLOW UPDATE_RPMS MK_SEC_COMP SIGNED_PKGS_ONLY"
+    VARS="$VARS WGET_WAIT WGET_TRIES VERBOSE"
+    VARS="$VARS MK_PATCH_RPM_COMP VERSION ARCH DIST ARCH_STRUCTURE"
+    VARS="$VARS ARCHIVE TARGET MK_REP"
+
+    ( echo "DEBUG: === distribution dependend variables ==="
+      var_debug_info $VARS
+    ) >&6
+
+    case $ARCH_STRUCTURE in
+      1)
+         VARS="DIST VERSION ARCH"
+         ;;
+      2)
+         VARS="DIST VERSION ARCH"
+         ;;
+      3)
+         VARS="DIST VERSION ARCH LANGUAGE"
+         ;;
+      4)
+         VARS="DIST VERSION ARCH"
+         ;;
+    esac
+
+    # check the required variables (in VARS) on meta characters, as directories
+    # and/or files are created with them (the variables may neither be empty)
+    for VAR in $VARS
+    do
+      # due to the eval the \" and \$ are needed, if not there an "*"
+      # will not be reported as invalid character.
+      eval chkvar $VAR var "\"\$$VAR"\"
+    done
+
+    BASE_ARCHIVE=$(echo $ARCHIVE | tr -s "/" | sed -e s+^/++ -e s+/$++)
+
+    SLASH_COUNT=${BASE_ARCHIVE//[^\/]/}
+    SLASH_COUNT=${#SLASH_COUNT}
+
+    if [[ "$SLASH_COUNT" = "0" ]]; then
+      ( echo "error: archive declaration \"$BASE_ARCHIVE\" incorrect."
+        echo " Insufficient directories, at least 2 directories are needed."
+        echo " Check config file: $CONFIG_FOUND"
+      ) >&2
+      apt_exit $ERR_CONFIGURATION
+    else
+
+      CACHEDIR=$SHAREDIR/$DISTID/cache
+
+      if [[ "$OPT_TEST" != yes ]]; then
+        [[ ! -d "$CACHEDIR" ]] && mckdir "$CACHEDIR"
+      else
+        echo "Running $PRGNAME in test mode (prefix test_ added)" >&3
+
+        BASE_ARCHIVE=test_$BASE_ARCHIVE
+
+        TEST_CACHEDIR=$SHAREDIR/$DISTID/test_cache
+
+        if [[ ! -d $TEST_CACHEDIR ]]; then
+          if [[ ! -d $CACHEDIR ]]; then
+            mckdir $TEST_CACHEDIR
+          else
+            cp -r $CACHEDIR $TEST_CACHEDIR
+          fi
+        fi
+
+        CACHEDIR=$TEST_CACHEDIR
+
+      fi # if $OPT_TEST != yes
+    fi # if $SLASH_COUNT = 0
+
+    echo "Archive structure: $ARCH_STRUCTURE => $BASE_ARCHIVE" >&3
+    echo "Entering cache build stage" >&3
+
+    unset PROCESSED_COMP
+    for ID in $IDS; do
+      SOURCE_NAME=$(echo $SOURCE_NAMES  | awk "{ print \$$ID }" )
+
+      # Has the component been processed before?
+      echo " $PROCESSED_COMP " | grep -q " $SOURCE_NAME "
+      if [[ $? -ne 0 ]]; then
+
+        if echo " $OPT_SCAN_RPM_DIR " | grep -q " $SOURCE_NAME "; then
+          SCAN=yes
+        else
+          SCAN=$(awk -F\; -v id=$ID '{
+            if ( $1 == id ) { print $11 }
+          }' $MIRRORTMP)
+        fi
+
+        if echo " $OPT_REBUILD_COMP " | grep -E -q " $SOURCE_NAME | all "; then
+          REBUILD_CACHE=yes
+        else
+          REBUILD_CACHE=no
+        fi
+
+        # The "/" squeeze at the end of line is needed as it seems that users
+        # put directories with multiple slashes in the config file, although
+        # this is by accident.
+        SOURCE_DIR=$(echo $SEARCH_DIRS | awk "{ print \$$ID }" | tr -s "/")
+        if [[ -d "$SOURCE_DIR" ]]; then
+
+          if [[ $SOURCE_DIR == ${SOURCE_DIR#/*} ]]; then
+            build_cache $SOURCE_NAME $SOURCE_DIR $ID $REBUILD_CACHE $SCAN
+            PROCESSED_COMP="$PROCESSED_COMP $SOURCE_NAME"
+          else
+            ( echo -n "error: absolute directory specifed, while a relative "
+              echo "directory is expected;"
+              echo " Component information: $SOURCE_NAME"
+              echo " Directory information: $SOURCE_DIR"
+            ) >&2
+          fi
+        else
+
+          if [[ $SCAN = no ]]; then
+
+            build_cache $SOURCE_NAME $SOURCE_DIR $ID $REBUILD_CACHE $SCAN
+            PROCESSED_COMP="$PROCESSED_COMP $SOURCE_NAME"
+
+          else
+            ( echo -n "error: not existing rpm repository directory "
+              echo "for component: $SOURCE_NAME."
+              echo " Expected directory: \"$TOPDIR/$SOURCE_DIR\"."
+            ) >&2
+
+            METHOD=$(echo $METHODS | awk "{ print \$$ID }" )
+            if [[ $METHOD = ftp || $METHOD = script ]]; then
+
+              UPDATE_RPMS_COMP=$(echo $UPD_RPM_COMPS | awk "{ print \$$ID }" )
+              if [[ "$UPDATE_RPMS" = yes ]]; then
+                if [[ "$UPDATE_RPMS_COMP" = yes ]]; then
+
+                  UPDATE_LOG_FILE=$UPDATE_LOG_DIR/$SOURCE_NAME
+                  echo "  Maybe update failed? (see $UPDATE_LOG_FILE)" >&2
+                else
+                  ( echo -n "  Update mode not activated in config file (set "
+                    echo "update-rpms=yes) for"
+                    echo "  this component ($SOURCE_NAME)."
+                  ) >&2
+                fi
+              else
+                if [[ "$UPDATE_RPMS_COMP" = yes ]]; then
+                  echo "  Update mode not activated (use --update-rpms) " >&2
+                else
+                  ( echo -n "  Update mode not activated (use --update-rpms to "
+                    echo "start with)."
+                  ) >&2
+                fi
+              fi # update mode activated ($UPDATE_RPMS = "yes")
+            fi # $METHOD = "ftp" || $METHOD = "script"
+          fi # Is the rpm directory to be scanned?
+        fi # Does $SOURCE_DIR exist?
+      fi # Should the component be processed?
+    done
+
+    case $TARGET in
+     cd)
+       echo "Entering package list per disc stage" >&3
+       for TYPE in bin src; do
+         @APTATELIBDIR@/compare_rpm_version \
+           --format path --rpmtype $TYPE $TMPDIR/build_cache::cache.extra
+       done | sed s/^/extra\;/ > $TMPDIR/cd
+       wc -l $TMPDIR/build_cache::cache.extra
+       wc -l $TMPDIR/cd
+       BEARERS="1 2"
+       ARCHIVE_TMP_PREFIX=tmp_$$
+       ;;
+
+     dvd)
+       BEARERS="1 2 3"
+       ARCHIVE_TMP_PREFIX=tmp_$$
+       ;;
+
+     server)
+       BEARERS=1
+       # We need a unique temp storage location.  Use prefix "tmp" to mark
+       # it as temporarily.  Use DISTID to make it unique add the
+       # BASE_ARCHIVE to add to reflect the component structure.
+       ARCHIVE_TMP_PREFIX=.tmp_${DISTID}_$(echo $BASE_ARCHIVE | cut -d"/" -f1)
+       ;;
+
+     *)
+       # Programmer error
+       echo "error: unknown TARGET" >&2
+       apt_exit $ERR_ASSERT
+       ;;
+    esac
+
+    BASE_ARCHIVE_TMP_DIR=$REP_DIR/$ARCHIVE_TMP_PREFIX
+    mckdir "$BASE_ARCHIVE_TMP_DIR"
+
+    # Prevent visitors to access the directory.  The BASE_ARCHIVE_TMP_DIR
+    # is not moved to the real location, only the directories below
+    # BASE_ARCHIVE_TMP_DIR directory are moved to the real spot.
+    # Therefor these directory setting do not have effect on the final product.
+    chmod 700 "$BASE_ARCHIVE_TMP_DIR"
+
+    echo "Entering apt repository creation stage" >&3
+
+    for BEARER in $BEARERS
+    do
+      case $TARGET in
+        cd)
+          printf "Creating repository for: CD-%s\n" $BEARER >&3
+          ARCHIVE="cd/$DISTID/$BEARER/$BASE_ARCHIVE"
+          ;;
+
+        dvd)
+          printf "Creating repository for: DVD-%s\n" $BEARER >&3
+          ARCHIVE="dvd/$DISTID/$BEARER/$BASE_ARCHIVE"
+          ;;
+
+        server)
+          ARCHIVE=$BASE_ARCHIVE
+          ;;
+      esac
+
+      ARCHIVE_ROOT=$REP_DIR/$ARCHIVE
+
+      # Take the directory/ies leading to the archive and the component
+      # directory into account.
+      REL_ARCHIVE=$(echo "$REPDIR/$ARCHIVE/base" | \
+         sed 's,^\./,,;s,^\/,,;s,[^/]$,&/,;s,[^/]*/,../,g;s,\/$,,');
+
+      if [[ "$FLAT" = yes ]]; then
+        SRPM_ARCHIVE=$ARCHIVE
+        REL_SRPM_ARCHIVE=$REL_ARCHIVE
+      else
+        SRPM_ARCHIVE=${ARCHIVE%/*} # leave off last directory
+        REL_SRPM_ARCHIVE=${REL_ARCHIVE%/*}
+      fi
+
+      ARCHIVE_SRPM_ROOT=$REP_DIR/$SRPM_ARCHIVE
+
+      if [[ $TARGET = server ]]; then
+        # In this case the temp directory and the archive overlap.
+        # For example: ARCHIVE = mydistro/1234/xyz, the temp directory must
+        # become ..../tmp_mydistro/1234/xyz.
+        # The variable BASE_ARCHIVE_TMP_DIR already ends with ..../tmp_mydistro/
+        # This requires that the first part of the variable $(SRPM_)ARCHIVE must
+        # be removed.
+        ARCHIVE_TMP_ROOT=$BASE_ARCHIVE_TMP_DIR/$( echo $ARCHIVE |
+          cut -d"/" -f2-)
+
+        echo $SRPM_ARCHIVE | grep -q "/"
+        if [[ $? -eq 0 ]]; then
+          ARCHIVE_TMP_SRPM_ROOT=$BASE_ARCHIVE_TMP_DIR/$(echo $SRPM_ARCHIVE |
+            cut -d"/" -f2-)
+        else
+          ARCHIVE_TMP_SRPM_ROOT=$BASE_ARCHIVE_TMP_DIR
+        fi
+      else
+        ARCHIVE_TMP_ROOT=$BASE_ARCHIVE_TMP_DIR/$ARCHIVE
+        ARCHIVE_TMP_SRPM_ROOT=$BASE_ARCHIVE_TMP_DIR/$SRPM_ARCHIVE
+      fi
+
+      VARS="ARCHIVE_ROOT ARCHIVE_TMP_ROOT"
+      VARS="$VARS SRPM_ARCHIVE ARCHIVE_SRPM_ROOT ARCHIVE_TMP_SRPM_ROOT UPDATEDIR"
+      VARS="$VARS UPDATE_LOG_DIR MIRRORTMP"
+      VARS="$VARS CACHEDIR"
+      var_debug_info $VARS >&6
+
+      # FIXME: what about the SRPMS.* directory in case a non flat directory
+      # structure is being used?  Should ARCHIVE_TMP_SRPM_ROOT be used instead?
+      # clean up
+      if [[ -d "$ARCHIVE_TMP_ROOT" ]]; then
+        rm -rf "$ARCHIVE_TMP_ROOT" 2>/dev/null
+        if [[ $? -ne 0 ]]; then
+          echo "Failed to remove directory $ARCHIVE_TMP_ROOT" >&2
+          apt_exit $ERR_DIR
+        fi
+      fi
+
+      if [[ "$TARGET" = server ]]; then
+        # Look if the srpm apt repository is located at the expected location.
+        # If not a change of repository structure has been requested by
+        # changing the <opt> attribute "flat" or it is the initial run for this
+        # repository.
+        ls -d $ARCHIVE_SRPM_ROOT/SRPMS.* >/dev/null 2>&1
+        if [[ $? -eq 0 ]]; then
+          REPOSITORY_CHANGE=""
+        else
+          if [[ "$FLAT" = yes ]]; then
+            ls -d $ARCHIVE_SRPM_ROOT/../SRPMS.* >/dev/null 2>&1
+            if [[ $? -eq 0 ]]; then
+              if [[ "$OPT_FORCE" = yes ]]; then
+                REPOSITORY_CHANGE=toflat
+                OPT_REBUILD_LINK=all
+              else
+                ( echo "Use the --force option to have the repository characteristic"
+                  echo "changed from noflat to flat"
+                ) >&2
+                apt_exit $ERR_CONFIGURATION
+              fi
+            else
+              # initial run
+              REPOSITORY_CHANGE=""
+            fi
+          else
+            ls -d "$ARCHIVE_ROOT"/SRPMS.* >/dev/null 2>&1
+            if [[ $? -eq 0 ]]; then
+              if [[ "$OPT_FORCE" = yes ]]; then
+                REPOSITORY_CHANGE=tonoflat
+                OPT_REBUILD_LINK=all
+              else
+                ( echo "Use the --force option to have the repository characteristic"
+                  echo "changed from flat to noflat"
+                ) >&2
+                apt_exit $ERR_CONFIGURATION
+              fi
+            else
+              # initial run
+              REPOSITORY_CHANGE=""
+            fi
+          fi
+        fi
+
+        if [[ -n "$REPOSITORY_CHANGE" ]]; then
+          echo -n "Note: the repository characteristic will be changed from " >&2
+          case $REPOSITORY_CHANGE in
+            toflat)   echo "noflat to flat" >&2 ;;
+            tonoflat) echo "flat to noflat" >&2 ;;
+          esac
+        fi
+      fi # if [[ $TARGET = server ]]
+
+      declare CHANGED_COMP_LIST=""
+      declare UNCHANGED_COMP_LIST=""
+      declare PROCESSED_COMP=""
+
+      for NUM in $IDS; do
+
+        SOURCE_NAME=$(echo $SOURCE_NAMES  | awk "{ print \$$NUM }" )
+
+        # Has the component been processed before?
+        echo " $PROCESSED_COMP " | grep -q " $SOURCE_NAME "
+        if [[ $? -ne 0 ]]; then
+
+          make_links regular $SOURCE_NAME $NUM $OPT_REBUILD_COMP,$OPT_REBUILD_LINK
+          PROCESSED_COMP="$PROCESSED_COMP $SOURCE_NAME"
+        fi
+      done
+
+      # Create the virtual component security
+      if [[ "$MK_SEC_COMP" = yes ]]; then
+        make_links security security secid $OPT_REBUILD_COMP,$OPT_REBUILD_LINK
+      fi
+
+      ( echo "DEBUG: changed components:   $CHANGED_COMP_LIST"
+        echo "DEBUG: Unchanged components: $UNCHANGED_COMP_LIST"
+      ) >&6
+
+      perl -I${APTATE_PERLLIBDIR} -MAptate::Yum \
+	-e "Yum('$CONFIG_FOUND','$DISTID', \
+           '$ARCHIVE_TMP_ROOT', \
+	   '$CHANGED_COMP_LIST',
+	   '$VERBOSE' )" >&3;
+
+      perl -I${APTATE_PERLLIBDIR} -MAptate::Repo \
+	-e "Repo('$CONFIG_FOUND','$DISTID', \
+           '$ARCHIVE_TMP_ROOT', \
+	   '$CHANGED_COMP_LIST',
+	   '$VERBOSE' )" >&3;
+
+      if [[ "$CHANGED_COMP_LIST" ]]; then
+
+        #
+        # The code below is similar to the code provided by genbasedir (from the
+        # apt-rpm project).  Genbasedir is not used, as a lot of the functionality
+        # in genbasedir is present in aptate as well.  To obtain more flexibility
+        # and efficiency use our own genbasedir code.
+        #
+        echo -e "Entering apt database building stage" >&3
+
+        GENLISTARG="$BLOAT"
+
+        if [[ "$VERBOSE" -ge 3 ]]; then
+          GENLISTARG="$GENLISTARG --progress"
+        fi
+
+        for COMP in $CHANGED_COMP_LIST; do
+          printf " %-16s  -> Bin: " $COMP >&3
+
+          # Take preventive action to prevent genpkglist to crash.  This can happen
+          # in case the source rpm (source of the link) is being removed.  Which
+          # can happen e.g. due to an asynchronous running rsync process.
+          # At busy servers, processing big component caches can consume a lot of
+          # time.  This can cause the cache to be out sync while aptate is not even
+          # finished.  The preventive action does not clean up the cache, this will
+          # be taken care of during the next run of aptate.
+          ( cd "$ARCHIVE_TMP_ROOT/RPMS.$COMP"
+            find . -follow 2>&1 >/dev/null | cut -d: -f2 | xargs rm -f
+          )
+
+          pushd "$ARCHIVE_TMP_ROOT"/base >/dev/null
+            genpkglist $GENLISTARG --index $TMPDIR/srcidx.$COMP "$ARCHIVE_TMP_ROOT" $COMP
+          popd > /dev/null
+
+          # Check the exit value of genpkglist
+          if [[ $? != 0 ]]; then
+
+            echo "error: genpkglist did not finish successfully." >&2
+            audit_component pkg $COMP "$ARCHIVE_TMP_ROOT/RPMS.$COMP"
+            apt_exit $ERR_REPOSITORY
+          fi
+
+          FILE=$ARCHIVE_TMP_ROOT/base/pkglist.$COMP
+          if [[ -r "$FILE" ]]; then
+            bzip2_checked "$FILE"
+          fi
+
+          if [[ "$VERBOSE" -ge 3 ]]; then
+            echo >&3
+          else
+            echo "done" >&3
+          fi
+
+        done
+
+        GENLISTARG="$GENSRCLIST_ARG_FLAT"
+
+        if [[ "$VERBOSE" -ge 3 ]]; then
+          GENLISTARG="$GENLISTARG --progress"
+        fi
+
+        for COMP in $CHANGED_COMP_LIST; do
+
+          printf " %-16s  -> Src: " $COMP >&3
+
+          # See comment above for genpkglist
+          ( cd "$ARCHIVE_TMP_SRPM_ROOT/SRPMS.$COMP"
+            find . -follow 2>&1 >/dev/null | cut -d: -f2 | xargs rm -f
+          )
+
+          pushd "$ARCHIVE_TMP_ROOT"/base > /dev/null
+          gensrclist $GENLISTARG "$ARCHIVE_TMP_ROOT${SRPMDIR}" $COMP $TMPDIR/srcidx.$COMP
+          popd > /dev/null
+
+          # Check the exit value of gensrclist
+          if [[ $? != 0 ]]; then
+
+            echo "error: gensrclist did not finish successfully." >&2
+            audit_component src $COMP "$ARCHIVE_TMP_SRPM_ROOT/SRPMS.$COMP"
+            apt_exit $ERR_REPOSITORY
+          fi
+
+          FILE=$ARCHIVE_TMP_ROOT/base/srclist.$COMP
+          if [[ -r "$FILE" ]]; then
+            bzip2_checked "$FILE"
+          fi
+
+          if [[ "$VERBOSE" -ge 3 ]]; then
+            echo >&3
+          else
+            echo "done" >&3
+          fi
+
+        done
+      fi
+
+      COMP_LIST="$CHANGED_COMP_LIST $UNCHANGED_COMP_LIST"
+      printf "Creating global release file: " >&3
+      printf $SCP >&4
+
+      TMP_HASHFILE=$TMPDIR/main::hashfile
+      MAX=$(echo $COMP_LIST | wc -w)
+      COUNT=1
+
+      echo "MD5SUM:" > $TMP_HASHFILE
+
+      for COMP in $CHANGED_COMP_LIST; do
+        printf "$RCP%02d/%02d " $COUNT $MAX >&4
+        for FILE2 in pkglist.$COMP pkglist.$COMP.bz2 \
+                     srclist.$COMP srclist.$COMP.bz2 release.$COMP ; do
+          FILE=$ARCHIVE_TMP_ROOT/base/$FILE2
+          MD5SUM=$(md5sum "$FILE" | cut -d' ' -f1)
+          FILESIZE=$(filesize "$FILE")
+          echo " $MD5SUM $FILESIZE $ARCHIVE/base/$FILE2" >> $TMP_HASHFILE
+        done
+        COUNT=$(($COUNT + 1))
+      done
+
+      for COMP in $UNCHANGED_COMP_LIST; do
+        printf "$RCP%02d/%02d " $COUNT $MAX >&4
+        for FILE2 in pkglist.$COMP pkglist.$COMP.bz2 \
+                     srclist.$COMP srclist.$COMP.bz2 release.$COMP ; do
+          FILE=$ARCHIVE_ROOT/base/$FILE2
+          MD5SUM=$(md5sum "$FILE" | cut -d' ' -f1)
+          FILESIZE=$(filesize "$FILE")
+          echo " $MD5SUM $FILESIZE $ARCHIVE/base/$FILE2" >> $TMP_HASHFILE
+        done
+        COUNT=$(($COUNT + 1))
+      done
+
+      #
+      # Global release file
+      #
+      ( echo "Origin: $DIST"
+        echo "Label: $DIST"
+        echo "Suite: unknown"
+        echo "Codename: unknown"
+        echo "Architecture: $ARCH"
+        echo "Components: $COMP_LIST" | tr -s " "
+        echo "Description: not available"
+        sed -e s+$ARCHIVE/++ -e s+^MD5SUM:+MD5Sum:+ $TMP_HASHFILE
+
+      ) > "$ARCHIVE_TMP_ROOT"/base/release
+
+      if [[ "$OLD_HASHFILE" = yes ]]; then
+        mv $TMP_HASHFILE "$ARCHIVE_TMP_ROOT"/base/hashfile
+      else
+        # Clean up.  The TMP_HASHFILE is not needed after this point
+        rm -f $TMP_HASHFILE
+      fi
+
+      printf $RCP$CLEOL >&4
+      printf "done\n" >&3
+
+      #
+      # End of code that is similar to the code provided by genbasedir
+      #
+
+      # Provide a list with all rpms and and by which component the rpms
+      # are provided
+      rm -f $TMPDIR/allpkgs
+      for COMPONENT in $COMP_LIST
+      do
+        if [[ -r $TMPDIR/build_cache::cache.$COMPONENT ]]; then
+          awk -F\; -v component=$COMPONENT -v signed_pkgs=$SIGNED_PKGS_ONLY '{
+            # Make the pkg only part of the contents list if it is
+            # a valid pkg (MD5 check passed).
+            prtpkg = "no"
+            if ( $7 == "MD5_OK" ) {
+              # Does the repository accepts gpg passed pkgs only?
+              if (signed_pkgs == "yes") {
+                if ($8 == "GPG_OK") prtpkg = "yes"
+              } else {
+                prtpkg = "yes"
+              }
+            }
+            if ( prtpkg == "yes" ) {
+              printf("%s;%s;%s;%s\n", $3, $4, $5, component )
+            }
+          }' $TMPDIR/build_cache::cache.$COMPONENT >> $TMPDIR/allpkgs
+        fi
+      done
+
+      if [[ -r $TMPDIR/allpkgs ]]; then
+        sort -u $TMPDIR/allpkgs | bzip2 -c > "$ARCHIVE_TMP_ROOT"/base/contlist.bz2
+      fi
+
+      # EXAMPLEDIR is needed by the function add_sourceslist_examples
+      if [[ "$TARGET" = server ]]; then
+        EXAMPLEDIR=$ARCHIVE_TMP_ROOT/examples
+	mkdir -p "$EXAMPLEDIR"
+      fi
+
+      if [[ "$SIGN" != yes ]]; then
+        if [[ "$TARGET" = server ]]; then
+          # create examples sources.list.
+          add_sourceslist_examples
+        fi
+      else
+        # SIGN = yes
+
+        echo "Signing the apt repository..." >&3
+        NAME=$(gpg --fingerprint $KEY_EMAIL | head -n 1 | cut -d' '  -f5-)
+        FINGERPRINT=$(gpg --fingerprint $KEY_EMAIL | head -n 2 | tail -n 1 | \
+                                       cut -d' '  -f9-  | sed -e s+" "++g)
+
+        (
+         echo "simple-key \"$KEY_NAME\""
+         echo "{"
+         echo "   Fingerprint \"$FINGERPRINT\";"
+         echo "   Name \"$NAME\";"
+         echo "}"
+        ) > $EXAMPLEDIR/vendors.list
+
+        gpg --sign -armour --detach-sign --yes --quiet --default-key $KEY_EMAIL \
+          "$ARCHIVE_TMP_ROOT"/base/release
+        cat "$ARCHIVE_TMP_ROOT"/base/release.asc >> "$ARCHIVE_TMP_ROOT"/base/release
+        rm -f "$ARCHIVE_TMP_ROOT"/base/release.asc
+
+        if [[ "$OLD_HASHFILE" = yes ]]; then
+          # create the hashfile for apt version 0.3.19
+          gpg --armour --export --default-key $KEY_EMAIL > $EXAMPLEDIR/$KEY_NAME.pub
+
+          gpg -armour -qs --yes --default-key $KEY_EMAIL "$ARCHIVE_TMP_ROOT"/base/hashfile
+          mv -f "$ARCHIVE_TMP_ROOT"/base/hashfile.asc "$ARCHIVE_TMP_ROOT"/base/hashfile.gpg
+        fi
+
+        if [[ "$TARGET" = server ]]; then
+          # create examples sources.list.
+          add_sourceslist_examples $KEY_NAME
+        fi
+      fi
+
+    done # for BEARER in BEARERS
+
+    # Clean up.  All real components have been processed, the temporary
+    # mirror file is not needed anylonger
+    rm -f $MIRRORTMP
+
+    ### audit code start ###
+    # Provide code to find the root cause why sometimes files have
+    # a unexpected length of 0 byte
+    DISPLAY_AUDIT=""
+
+    cd "$ARCHIVE_TMP_ROOT"/base
+    FILES=$(find . -size 0 -name "*.bz2")
+
+    ( echo "Contents of tmp base dir: $ARCHIVE_TMP_ROOT/base"
+      ls -l
+      echo
+      echo "Free diskspace:"
+      df . /tmp
+      echo
+
+    ) > $TMPDIR/audit
+     
+    cd "$TOPDIR"
+
+    if [[ -n "$FILES" ]]; then
+      DISPLAY_AUDIT=yes
+    fi
+    ### audit code end ###
+
+    # Do we have enough space to move the repository created in the
+    # temporary location to it's final destination?
+    typeset -i CUR_REP_SIZE
+    if [[ -d "$ARCHIVE_ROOT" ]]; then
+      # The output of the "du" command is in kbytes
+      CUR_REP_SIZE=$(du -s "$ARCHIVE_ROOT" | awk '{print $1}')
+    else
+      mckdir "$ARCHIVE_ROOT"
+      CUR_REP_SIZE=0
+    fi
+
+    typeset -i NEW_REP_SIZE
+    typeset -i SPACE_AVAIL
+    typeset -i REST_SPACE
+    # The output of the "du" command is in kbytes
+    NEW_REP_SIZE=$(du -s "$ARCHIVE_TMP_ROOT" | awk '{print $1}')
+
+    # Use the posix output format of df.  This will ensure that the output
+    # is provided on 1 line.  In default mode "df" will report huge sizes
+    # over several lines which is undesired.
+    # The output of the "df" command is in kbytes
+    SPACE_AVAIL=$(df -P "$ARCHIVE_ROOT" | tail -1 | awk '{print $4}')
+
+    # FIXME: This is fragile, overflows might occur. 
+    SPACE_AVAIL=$(($SPACE_AVAIL + $CUR_REP_SIZE))
+    REST_SPACE=$(($SPACE_AVAIL - $NEW_REP_SIZE))
+
+    if [[ $REST_SPACE -lt 0 ]]; then
+ 
+      # Do not install the new repository (keep the old repository).
+      # The caches are however saved.  To get the caches and the
+      # repository in sync again, when disk space have been made available
+      # to the apt repository the argument "--rebuild-links all" must be used.
+      ( echo
+        echo "error: the created repository has not been installed, as"
+        echo "there is not enough file space."
+        echo "Size of created repository: $NEW_REP_SIZE"
+        echo "Calculated available space: $SPACE_AVAIL"
+        echo -n "$PRGNAME must be run with '--rebuild-links all' to "
+        echo "synchronize the"
+        echo "repository with the cache."
+      ) >&2
+
+    else
+
+      # Yes, there is enough space to install the new repository.
+      echo "Installing apt repository at: $ARCHIVE_SRPM_ROOT " >&3
+
+      if [[ "$OPT_TEST" = yes ]]; then
+        ( echo -n "The test run left overs, must be removed manually when "
+          echo "not needed any more."
+          echo "The directories that have been created by this (test) run are:"
+          echo " - $ARCHIVE_SRPM_ROOT"
+          echo " - $CACHEDIR"
+        ) >&3
+      fi
+
+      # Remove the existing components, so the newly created components can
+      # be moved to their new location.  The $ARCHIVE_ROOT/base/release file
+      # provides which components were created with the last run.  With
+      # this information it is possible to remove only those components,
+      # leaving other directories untouched.
+      if [[ -s "$ARCHIVE_ROOT"/base/release ]]; then
+        OLD_COMPONENTS=$(grep ^Components: "$ARCHIVE_ROOT"/base/release | cut -d: -f2)
+      else
+        unset OLD_COMPONENTS
+      fi
+
+      # A trick is needed to remove dynamicly generated components such as
+      # the ones for patch - and delta rpms.
+      echo $OLD_COMPONENTS | tr " " "\n" | sort > $TMPDIR/oldcomplist
+      grep ^Components: "$ARCHIVE_TMP_ROOT"/base/release | cut -d: -f2 |
+        tr " " "\n" | sort > $TMPDIR/newcomplist
+      LOST_COMPONENTS=$(comm -23 $TMPDIR/oldcomplist $TMPDIR/newcomplist)
+      rm -f $TMPDIR/oldcomplist $TMPDIR/newcomplist
+
+      for COMPONENT in $OLD_COMPONENTS; do
+        case $REPOSITORY_CHANGE in
+        toflat)
+          rm -rf "$ARCHIVE_ROOT/../SRPMS.$COMPONENT"
+          ;;
+        tonoflat)
+          rm -rf "$ARCHIVE_ROOT/SRPMS.$COMPONENT"
+          ;;
+
+        *)
+	  ;;
+        esac
+      done
+
+      for COMPONENT in $LOST_COMPONENTS; do
+        rm -rf "$ARCHIVE_ROOT/RPMS.$COMPONENT" "$ARCHIVE_SRPM_ROOT/SRPMS.$COMPONENT" \
+          "$ARCHIVE_ROOT/base/release.$COMPONENT" \
+          "$ARCHIVE_ROOT/base/pkglist.$COMPONENT" \
+          "$ARCHIVE_ROOT/base/pkglist.$COMPONENT.bz2" \
+          "$ARCHIVE_ROOT/base/srclist.$COMPONENT" \
+          "$ARCHIVE_ROOT/base/srclist.$COMPONENT.bz2" \
+          "$ARCHIVE_ROOT/base/mrlist.$COMPONENT" \
+          "$ARCHIVE_ROOT/base/mrlist.$COMPONENT.bz2" \
+          "$ARCHIVE_ROOT/yum/$COMPONENT"
+      done
+
+      MV_EXIT_VAL=0
+
+      rm -f "$ARCHIVE_ROOT"/base/hashfile*
+      rm -f "$ARCHIVE_ROOT"/base/contlist*
+      rm -f "$ARCHIVE_ROOT"/base/release
+
+      mkdir -p "$ARCHIVE_ROOT"/base
+      mv -f "$ARCHIVE_TMP_ROOT"/base/* "$ARCHIVE_ROOT"/base || MV_EXIT_VAL=1
+
+      rm -rf "$ARCHIVE_ROOT"/examples
+      mv "$ARCHIVE_TMP_ROOT"/examples "$ARCHIVE_ROOT" || MV_EXIT_VAL=1
+
+      for COMPONENT in $CHANGED_COMP_LIST; do
+        # Extra check on existing directory.  This problem may happen when
+        # scan is switch off and the repository is changed from flat to
+        # noflat.  It happened while during testing....
+	if [[ -d "$ARCHIVE_TMP_ROOT/RPMS.$COMPONENT" ]]; then
+          rm -rf "$ARCHIVE_ROOT/RPMS.$COMPONENT"
+          mv "$ARCHIVE_TMP_ROOT/RPMS.$COMPONENT" "$ARCHIVE_ROOT" || MV_EXIT_VAL=1
+        fi
+
+	if [[ -d "$ARCHIVE_TMP_SRPM_ROOT/SRPMS.$COMPONENT" ]]; then
+          rm -rf "$ARCHIVE_SRPM_ROOT/SRPMS.$COMPONENT"
+          mv "$ARCHIVE_TMP_SRPM_ROOT/SRPMS.$COMPONENT" "$ARCHIVE_SRPM_ROOT" || MV_EXIT_VAL=1
+        fi
+
+        if [[ -d "$ARCHIVE_TMP_ROOT/yum/$COMPONENT" ]]; then
+	  rm -rf "$ARCHIVE_ROOT/yum/$COMPONENT"
+	  mkdir -p "$ARCHIVE_ROOT/yum"
+	  mv "$ARCHIVE_TMP_ROOT/yum/$COMPONENT" "$ARCHIVE_ROOT/yum" || MV_EXIT_VAL=1
+        fi
+      done
+
+      TIME=$(date '+%s')
+      if [[ -n "$CACHE_CHANGED_COMP_QUEUE" ]]; then
+        cache_adm common $TIME $CACHE_CHANGED_COMP_QUEUE
+        unset CACHE_CHANGED_COMP_QUEUE
+      fi
+
+      if [[ -n "$ACTION_CHANGED_COMP_QUEUE" ]]; then
+        cache_adm $TARGET $TIME $ACTION_CHANGED_COMP_QUEUE
+        unset ACTION_CHANGED_COMP_QUEUE
+      fi
+
+      ### audit code start ###
+      if [[ $MV_EXIT_VAL -ne 0 ]]; then
+        ( echo "mv failed"
+          echo
+          echo "Free diskspace:"
+          df . /tmp "$ARCHIVE_ROOT"
+          echo
+
+        ) >> $TMPDIR/audit
+
+        DISPLAY_AUDIT=yes
+      fi
+      
+      cd "$ARCHIVE_ROOT"/base
+      FILES=$(find . -size 0 -name "*.bz2")
+
+      ( echo "Contents of base dir: $ARCHIVE_ROOT/base"
+        ls -l
+        echo
+
+      ) >> $TMPDIR/audit
+
+      cd "$TOPDIR"
+
+      if [[ -n "$FILES" ]]; then
+        DISPLAY_AUDIT=yes
+      fi
+      ### audit code end ###
+
+    fi # if [[ $SPACE_AVAIL -eq 0 ]]
+
+    ### audit code start ###
+    if [[ "$DISPLAY_AUDIT" = yes ]]; then
+      ( echo "error: unexpected 0 byte files detected in $ARCHIVE_ROOT/base"
+        echo
+        echo -n "The information below should help to find the root cause of "
+        echo "this problem."
+        echo
+        cat $TMPDIR/audit
+      ) >&2
+    fi
+    rm -f $TMPDIR/audit
+    ### audit code end ###
+
+    clean_up_rep_tmpdir
+
+    # Save the caches
+    for COMPONENT in $COMP_LIST
+    do
+      FILE=$TMPDIR/build_cache::cache.$COMPONENT
+      if [[ -r $FILE ]]; then
+        mv $FILE $CACHEDIR/$COMPONENT
+      fi
+    done
+
+  fi # if [[ $MK_REP = yes ]]
+
+  clean_up_distid_lock
+
+done # for DISTID in $DISTROS
+
+displ_bad_rpms
+clean_up_tmpdir
+
+# Prevent an exit trap call while exiting aptate
+trap - EXIT
+
+if [[ -n "$LOCKED_DISTIDS" ]]; then
+  ( echo "$PRGNAME: 1 or more distids were locked"
+    echo "Locked distids: $LOCKED_DISTIDS"
+  ) >&3
+  exit $ERR_LOCKED
+else
+  echo "$PRGNAME: finished successfully" >&3
+  exit 0
+fi 
+

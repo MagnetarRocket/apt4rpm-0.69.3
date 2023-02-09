@@ -1,0 +1,158 @@
+#! @PERL@ -w
+##################################################################
+#
+# $Id: script.in,v 1.2 2002/11/25 04:31:01 corsepiu Exp $
+#
+# Aptate's internal "script driver".
+#
+# Written by Ralf Corsepius
+# Copyright (C) 2002 Ralf Corsepius
+#
+# Send suggestions to: apt4rpm-devel@lists.sourceforge.net
+# Homepage: http://apt4rpm.sourceforge.net
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# For a copy of the GNU General Public License, visit
+# http://www.gnu.org or write to the Free Software Foundation, Inc.,
+# 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+##################################################################
+
+use strict;
+use XML::LibXML;
+use Getopt::Long;
+
+sub version ();
+sub help ();
+
+# Global vars
+my $PROGRAM = 'script';
+my $VERSION = '@PACKAGE_VERSION@';
+my $BUGS = '@PACKAGE_BUGREPORT@';
+
+my $updatedir = '';
+my $infile = '' ;
+my $dva = undef;
+my $comp = undef;
+my $verbose = 0;
+
+Getopt::Long::config ("bundling", "pass_through");
+Getopt::Long::GetOptions
+  (
+    'version'           => \&version,
+    'v|verbose+'        => \$verbose,
+    'help'              => \&help,
+    'distribution=s'    => \$dva,
+    'component=s'       => \$comp
+  ) or exit 1;
+
+die "$0: wrong number of arguments.\n"
+  if ( $#ARGV != 0 );
+$infile = $ARGV[0] ;
+
+die "$0: input file missing.\n"
+  if ( not $infile );
+die "$0: input file $infile not found.\n"
+  if (not -e $infile);
+
+# Create a parser
+my $parser = XML::LibXML->new();
+# Don't validate
+$parser->validation(0);
+$parser->expand_entities(1);
+$parser->complete_attributes(1);
+$parser->keep_blanks(0); # Don't care about blanks
+
+# Parse the file
+my $doc = $parser->parse_file($infile)
+  or die "$0; Failed to open $infile.\n";
+
+# Check the root element
+my $root = $doc->documentElement()
+  or die "$0: Could not get root node";
+
+die "$0: illegal document type <", $root->nodeName, ">\n"
+    if ( $root->nodeName ne 'opt' );
+die "$0: missing --distribution\n"
+  if ( not $dva );
+die "$0: missing --component\n"
+  if ( not $comp );
+
+my $componentxpath = 
+  'child::opt'
+  . '/child::distribution[attribute::id=\'' . $dva . '\']'
+  . '/child::component[child::name=\'' . $comp . '\']';
+
+my $scriptxpath = $componentxpath  . '/child::script';
+
+my $script = $doc->findvalue( $scriptxpath );
+print STDERR "Failed to query: $scriptxpath\n"
+  if ( $verbose and ( not $script ) );
+die "$0: xpath query $scriptxpath failed on $infile\n"
+  . " This probably means that $infile lacks a \n"
+  . "<distribution id=\"$dva\">\"\n"
+  . "  <component>\n"
+  . "   <name=\"$comp\">\n"
+  . "   <script> ...\n"
+  . "node\n" 
+  if ( not $script );
+
+# retrieve topdir
+my $topdir = $doc->findvalue( 'child::opt/child::topdir' );
+print STDERR "topdir:$topdir\n" 
+  if ( $verbose > 0 );
+
+# retrieve url
+my $url = $doc->findvalue( $componentxpath . '/child::url' );
+print STDERR "url:$url\n" 
+  if ( $verbose > 0 );
+
+$script .= ' ' . $topdir . ' ' . $url ;
+print STDERR "Running $script\n" if ( $verbose );
+my $status = system( $script ) >> 8;
+
+die "$0: failed to run script $script\n"
+  . "Exit status: $status\n"
+  if  ( $status != 0 );
+
+exit 0;
+
+sub help()
+{
+  print <<EOF;
+Usage: $PROGRAM [options] --distribution=dist-id --component=component-id infile
+
+Aptate's internal \"script\" driver. 
+
+Invokes \"script to invoke\" for a distribution/component pair 
+given in an aptate.conf:
+
+<distribution id="dist-id">
+  ...
+  <component>
+    <name>component-id</name>
+    ...
+    <script>script to invoke</script>
+    ...
+  </component>
+  ...
+<distribution>
+
+Options:
+        --help			print this help, then exit.
+        --version		print version number, then exit.
+
+Report bugs to <$BUGS>
+EOF
+
+  exit 0;
+}

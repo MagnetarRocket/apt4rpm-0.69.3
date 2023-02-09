@@ -1,0 +1,69 @@
+Client example scripts
+-----------------------
+The scripts in this directory are _example_ scripts for the apt client.
+
+
+Package upgrading automated
+----------------------------
+The script "auto-apt" determines if there are packages to be updated, after a
+minimum period (hours/days/weeks) has passed.  The default period is
+set to 23 hours. If there are packages to be updated it will do so.
+
+The script can be can be located in /usr/bin, but it may be placed in /etc/rc.d
+as well.  If you now link the script to: /etc/rc.d/rc5.d/S99apt the script will
+be run during boot.
+And if you add an entry to your cron as well to have the script run regurarely,
+you are sure that your system stays up to date, no matter whether the system 
+is powered down after each usage session or whether you want to go for a world 
+record uptime :)
+
+A log file with packages that have been updated is held in /var/log/aptpkg.log
+
+
+How to control a whole lot of systems
+---------------------------------------
+A possible solution to control a whole bunch of systems, where both the user
+and the central administration want to be able to influence the sources.list
+file, is by using 2 custom sources.list files e.g. a sources.ftp and a
+sources.user file.  These 2 custom sources.list files should than be
+concatenated into the sources.list file just before apt is going to do its
+upgrading job (1).
+A little more advanced would be to tell apt to use a sources.list file called
+sources-list instead of sources.list.  This can be done in the /etc/apt/apt.conf
+by setting Dir::Etc::sourcelist to sources-list, or by executing apt as follows:
+apt-get -o Dir::Etc::sourcelist=/etc/apt/sources-list update
+apt-get -o Dir::Etc::sourcelist=/etc/apt/sources-list upgrade
+(instead of sources-list one could a more descriptive name like, e.g.:
+ sources.list.security)
+
+The user can now continue to use the sources.list file as 1 of the 2 custom
+files; sources.ftp and sources.list will be concatenated into the sources-list
+file :
+
+The central administration can now store a sources.ftp file at a central
+server or provide it via an rpm, being stored in the apt repository maintained
+by the central adminstration.  The user can be given write permission to the
+(/etc/apt/)sources.user/sources.list file.
+
+(1) This needs a wrapper around apt-get, to make it possible to work.
+
+
+Adding new packages to desktops that are maintained centrally
+--------------------------------------------------------------
+A (virtual) package providing links to company/organization required (dependend)
+packages may come in handy for organizations that maintain desktops centrally.
+With the home brewed (virtual) rpm one is able to control (add or remove)
+the packages being applied to the desktop clients.  If e.g. a new package
+(rpm X) is to be added to a system, a dependency is added to the (virtual) rpm
+for rpm X.  The next time the client system is being upgraded rpm X will be
+installed on the client system :)
+The virtual package can of course provide the sources.ftp file that is
+maintained by the central organization as mentioned in the previous section.
+If the latter is used the virtual won't be virtual anymore :)
+
+
+Contacts
+---------
+Enjoy these examples, and please let us know your additions at:
+apt4rpm-devel@lists.sourceforge.net or apt4rpm-users@lists.sourceforge.net
+

@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+  "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+
+<!ENTITY example-aptate.minimal.xml SYSTEM "example/aptate.minimal.xml">
+<!ENTITY example-aptate.xml   SYSTEM "example/aptate.xml">
+]>
+
+<book>
+ <article>
+  <title>apt4rpm</title>
+   <articleinfo>
+    <author>
+     <firstname>Richard</firstname>
+     <surname>Bos</surname></author>
+    <date>30 November 2003</date>
+  </articleinfo>
+  <section>
+   <sectioninfo>
+    <copyright>
+     <year>2001, 2002, 2003</year>
+     <holder>Marcel Ritter and Richard Bos</holder>
+    </copyright>
+   </sectioninfo>
+   <title></title>
+      <para><ulink url="http://apt4rpm.sourceforge.net">homepage</ulink></para>
+  </section>
+  <section>
+   <title>Introduction</title>
+   <para>The Advanced Package Tool (APT) has been available for some time now. 
+    <ulink url="http://www.debian.org">Debian</ulink> based Linux distributions
+    used it for several years, but the RedHat Package Manager 
+    <ulink url=" http://distro.conectiva.com.br/projetos/42/">(rpm) based
+    version</ulink> is still mostly unknown. It was done by 
+    <ulink url="http://www.conectiva.com">Conectiva S.A.</ulink>, a Brasilian
+    linux distributor.  Though developed for their own distribution it works 
+    with minor/no modifications with most other distributions (currently 
+    tested with <ulink url="http://www.suse.com">SuSE</ulink> and
+    <ulink url="http://www.redhat.com">RedHat</ulink>). 
+   </para>
+   <para>To be able to use apt, an apt repository is needed.  Conectiva users 
+    are lucky in this respect as Conectiva provides a public apt repository
+    which can be reached via the internet.  Users of other rpm based
+    distributions are less lucky, as they need to provide an apt repository
+    themselves.  Here is were apt4rpm jumps in.
+    The apt4rpm package creates an apt repository of an 
+    ordinary rpm repository.  With other words the apt client software
+    is provided by the apt-rpm project of Conectiva, the server side software
+    is being streamlined by the apt4rpm package.  The main application in the
+    latter is <application>aptate</application> which is a contamination of
+    the words <emphasis>apt</emphasis> and upd<emphasis>ate</emphasis>.
+   </para>
+   <para>A list of public apt repositories can be found at the 
+    <ulink url="http://apt4rpm.sourceforge.net">apt4rpm</ulink> website.
+   </para>
+    
+  </section>
+
+  <section>
+   <title>Setup</title>
+   <section>
+    <title>Server</title>
+    <bridgehead>Install apt rpm packages</bridgehead>
+    <para>Make sure you have the rpm packages <emphasis>apt</emphasis>, 
+     and it's dependend packages (perl-)XML-LibXML, (perl-)XML-LibXML-Common,
+     (perl-)XML-NamespaceSupport, (perl-)XML-SAX.  Depending on the package
+     distributor you may need apt-server.
+
+     If you do not have these packages you can download them from the
+     download page of the 
+     <ulink url="http://apt4rpm.sourceforge.net/">apt4rpm</ulink> website or
+     just create them by using the .spec files (see the comments at the top
+     of the .spec files for more information).
+    </para>
+    
+    <bridgehead>Build with:</bridgehead>
+    <para><command>rpmbuild -ba apt.spec</command></para>
+
+    <bridgehead>Install with:</bridgehead>
+    <para><command>rpm -Uvh apt apt-libs apt-server apt4rpm</command></para>
+    <para>(short form here - use the created filenames with version number).
+     Repeat the same command sequence for the XML perl modules, if needed.
+    </para>
+
+    <bridgehead>Configuration setup</bridgehead>
+    <para>Change the configuration file aptate.conf to your needs. 
+     It can be stored in the directories:
+     <filename class="directory">/etc/apt/</filename> or
+     <filename class="directory">$HOME/.aptate/</filename>.
+    </para>
+    <para>Aptate.conf, or any other name in which case the argument
+     --config-file must be used, holds the configuration information needed to
+     run aptate.  The configuration file is xml formatted and it follows 
+     the rules layed down in file aptate.dtd.
+     The information ranges from defining the top directory up to describing
+     a linux distribution.
+    </para>
+    <para>The configuration file defines a list of sources where RPM packages
+     can be found.
+     Currently only local directories and FTP servers can be used.
+     Two example configuration files,
+     <xref linkend="example-aptate.minimal.xml" /> and 
+     <xref linkend="example-aptate.xml" /> are included in this manual,
+    </para>
+    <para>If you configured everything to your needs you can start creating the 
+     needed databases by running <application>aptate</application>. Quite some
+     effort have been spend to add error messages - so you should get hints if
+     something goes wrong. <application>Aptate</application> will also create 
+     example configuration files for the client machine (sources.list and 
+     vendors.list) that need to be copied to the clients config directory
+     <filename id="directory">/etc/apt/</filename>.
+     <xref linkend="example-sources.list" /> shows a sources.list
+     file and an example of the vendors.list file is shown in
+     <xref linkend="example-vendors.list" />.
+    </para>
+   </section>
+   <section>
+    <title>Client</title>
+    <bridgehead>Install APT RPM packages</bridgehead>
+    <para>The Client requires the package <emphasis>apt</emphasis> and
+     depending on the distributor <emphasis>apt-libs</emphasis> as well.
+    </para>
+
+    <bridgehead>Configure setup</bridgehead>
+    <para>Get the configuration files (sources.list and eventually 
+     vendors.list) and install them in 
+     <filename class="directory">/etc/apt</filename>.
+     If you want to use authentication with <application>apt</application> - 
+     make sure you have all needed GPG/PGP keys installed on the server/client.
+    </para>
+
+    <bridgehead>First steps</bridgehead>
+    <para>To check if your setup is correct, try: 
+     <command>apt-get update</command>
+    </para>
+    <para>
+     This will copy the databases to your local harddisk (if
+     everything is ok) or complain (mainly if sources.list is not correct).
+    </para>
+    <para>You should check your currently installed packages status with:
+     <command>apt-get check</command>
+    </para>
+    <para>
+     This will make sure that you have no unresolved dependencies between
+     installed packages. If it complains, that this is not the case try:
+     <command>apt-get -f install</command>
+    </para>
+    <para>
+     which will install all packages, that are needed by already
+     installed packages.
+    </para>
+    <para>If all this went ok, try: <command>apt-get -s upgrade</command>
+    </para>
+    <para>to see if there are any new packages available.  The -s argument
+     tells apt-get to simulate the command (nothing will be installed).
+     </para>
+    <para>There is a second mode for upgrade called 
+     <emphasis>dist-upgrade</emphasis> In contrast to 
+     <emphasis>upgrade</emphasis> this will also install newer 
+     packages that require the removal or installation of extra packages.
+    </para>
+   </section>
+      <section>
+	<title>Next steps</title>
+	<para>There is much to tell about apt, how it can be used and how
+         apt can be tuned according your desires.  However, this is beyond the
+         scope of this manual.  At the
+         <ulink url="http://apt4rpm.sourceforge.net">apt4rpm</ulink>
+         website a link called related
+         matrial can be found.  The page behind that link holds many references
+         to apt howto's, manuals, etc.  This page is worth to be visited,
+         especially when you're having questions, are stuck and the like!
+         Or start reading the apt man pages 
+         (<command>man apt-get</command> or <command>apropos apt</command>).
+        </para>
+      </section>
+  </section>
+
+  <section>
+   <title>Crypto</title>
+   <para>Just a very few words about public key cryptography (for indepth 
+    information you should read the GPG-HOWTO).
+   </para>
+   <para>Public key crypto systems are based on a key pair consisting of a 
+    secret and a public key. The secret key can be used by its owner to 
+    sign or encrypt files, while the public key can be used to prove the 
+    origin of files.
+   </para>
+   <para>This section is a short introduction in the GnuPG features you
+    might need with apt4rpm.
+   </para>
+   <para>This is especially true if you use the
+    <parameter>signed-pkgs-only</parameter> which means only
+     signed packages are used for updates. You need to have the corresponding
+     public key on your key ring to validate those packages.
+   </para>
+   <para>Most distributions have the vendor key attached by default to root's
+    key ring. However aptate supports all operations to be done by a non-root
+    user (for security reasons), and this one is likely to start with an empty
+    key ring (which might cause all packages to be marked "insecure" and to
+    be dropped). 
+   </para>
+   <important>
+    <para>If you get this behaviour, make sure to check your key ring!</para>
+   </important>
+   <para>For further information visit the
+    <ulink url="http://www.gnupg.org">GPG</ulink> homepage and the
+    <ulink url="http://apt4rpm.sourceforge.net/ref.html">related matrial</ulink>
+    webpage at the apt4rpm website.  Here you find at least 1 reference to
+    "Signing rpms with gpg".
+   </para>
+
+   <section>
+    <title>Server</title>
+    <section>
+     <title>Signed repositories</title>
+     <para>A signed repository is required if your apt repository is being
+      mirrored and you want to prevent that others are sneaking in faulty
+      packages.
+     </para>
+     <para>Create a key: <command>gpg --gen-key</command></para>
+     <para>You are asked a lot of questions - if unsure simply press return.
+      If you get some messages about "missing entropy" and the program seems
+      to hang - simply do something on your system -> gpg is still alive!
+      But it may take some time.
+     </para>
+     <para>After you finished you can check for your new key by typing:
+      <command>gpg --list-keys</command>
+     </para>
+     <para>If you want to use encrypted repositories you need to export the
+      corresponding key to your client machines. To do so type
+      (replace <emphasis>EMAIL</emphasis> with the e-mail address you entered 
+      when creating your key pair):
+      <command>gpg --armour --export EMAIL > /tmp/public.key</command>
+     </para>
+     <para>Before creating the repository databases by calling
+      <application>aptate</application>, make sure to change the following
+      values in your aptate.conf file:
+      (<emphasis>MYKEY</emphasis> is shorthand for the key)
+      <programlisting>
+       <sgmltag class="starttag">security</sgmltag>
+        <sgmltag class="starttag">hashfile_signature</sgmltag>yes<sgmltag class="endtag">hashfile_signature</sgmltag>
+        <sgmltag class="starttag">gpg_key</sgmltag>
+         <sgmltag class="starttag">name</sgmltag>MYKEY<sgmltag class="endtag">name</sgmltag>
+         <sgmltag class="starttag">email</sgmltag>EMAIL<sgmltag class="endtag">email</sgmltag>
+        <sgmltag class="endtag">gpg_key</sgmltag>
+       <sgmltag class="endtag">security</sgmltag>
+      </programlisting>
+     </para>
+     <para>Or use the corresponding arguments options, which are respectively:
+      --gpg-key and --gpg-key-email.
+     </para>
+    </section>
+
+    <section>
+     <title>Signed packages</title>
+     <para>To sign RPM packages you need to tell rpm what key to use. This can
+      be done by entries in your <filename>$HOME/.rpmmacros</filename> file.
+      Replace <emphasis>EMAIL</emphasis> in the following example with your
+      GPG key pair e-mail adress.
+      <programlisting>
+       %_signature gpg
+       %_gpg_name EMAIL
+      </programlisting>
+      After you did this you can use <command>rpm --addsign *.rpm</command>
+      to add your signature to existing RPM files.  If you build new ones 
+      make sure to add option <parameter>--sign</parameter>.
+     </para>
+    </section>
+   </section>
+    <section>
+     <title>Client</title>
+     <para>Import the repository key on the client: 
+      <command>gpg --import  /tmp/public.key</command>
+     </para>
+    </section>
+  </section>
+
+  <section>
+   <title>Aptate configuration</title>
+   <para>A short word about the configuration file of aptate, as the details
+    of the config file are explained in a seperate manual that can be found
+    here....
+    The configuration file is xml formatted.  Nothing to worry about as xml
+    formatted files
+    can still be editted with good old editors like vi, emacs, jed, etc.
+    However, it's strongly recommended to edit the config file with xemacs
+    in psgml mode.  Xemacs in this mode will be a great help for you to
+    navigate you through the dire straits of the defining the configuration
+    file.  Xemacs will be like a GUI, showing you the the values that
+    are available and it will show you the default values.  To get Xemacs in
+    psgml mode you need the pgsml module for xemacs and the configuration
+    file should have the suffix ".xml".  Other modern xml editors are
+    <application>kxmleditor</application> and
+    <application>mlview</application>.
+   </para>
+  </section>
+
+  <section>
+   <title>Usage</title>
+   <para>Some usage examples:</para>
+   <para><command>aptate --update-rpms --config my-apt4rpm.xml</command></para>
+   <para>In case you updated your local repository (after copying rpms
+    from CD e.g.), the following command will update your apt
+    repository, but will not download/mirror rpm packages
+   </para>
+   <para><command>aptate --noupdate-rpms</command></para>
+   <para>The configuration file can be checked on correctness by calling
+    <application>aptate</application> with the <parameter>--check</parameter>.
+   </para>
+   <para><command>aptate --check --config-file /usr/tmp/apt4rpm.xml</command></para>
+  </section>
+
+  <section>
+   <title>Automatic Package Upgrading</title>
+   <para>If you're interested in ways to keep your system or systems up to
+    date automatically have a look at the scripts in the client directory.
+   </para>
+  </section>
+
+  <section>
+   <title>Feedback</title>
+   <para>When you encounter a problem with apt, determine whether the 
+    problem is in the client - or in the server software.  In case 
+    the problem is in the server software (aptate) you may find assistance
+    at the apt4rpm mailinglists: 
+    <email>apt4rpm-devel@lists.sourceforge.net</email> or
+    <email>apt4rpm-users@lists.sourceforge.net</email>.
+    If the problem is in the client software (apt-get/apt-cache) you may
+    find support at the apt-rpm mailinglist:
+    <email>apt-rpm@distro.conectiva.com.br</email>.
+   </para>
+   <para>We hope that you enjoy using apt and are looking forward to your
+    contributions.  Being patches or promoting the use of apt with your
+    fellow linux users and towards your distributor!
+   </para>
+  </section>
+
+  <section>
+   <title>Client Configuration Examples</title>
+   <section>
+    <title>Client</title>
+
+    <example id="example-aptate.minimal.xml">
+     <title>Minimal aptate configuration file</title>
+     <programlisting>
+      &example-aptate.minimal.xml;
+     </programlisting>
+    </example>
+
+    <example id="example-aptate.xml">
+     <title>A possible aptate configuration file</title>
+     <programlisting>
+      &example-aptate.xml;
+     </programlisting>
+    </example>
+
+    <example id="example-sources.list">
+     <title>sources.list</title>
+     <programlisting>
+# created by aptate
+rpm     [MR]  file:/dist/apt okna/wow-i586 localrpms
+rpm     [MR]  ftp://ftp.gwdg.de/pub/apt okna/wow-i586  extra kde update x base kde3 security
+rpm-src [MR]  ftp://ftp.gwdg.de/pub/apt okna/wow-i586  extra kde update x base kde3 security
+     </programlisting>
+    </example>
+
+    <example id="example-vendors.list">
+     <title>vendors.list</title>
+      <programlisting>
+<![CDATA[
+simple-key "MR"
+{
+   Fingerprint "059AB253B32F6340689E0AB2F48394E73F2B1DDC";
+   Name "Marcel Ritter <Marcel.Ritter@rrze.uni-erlangen.de>";
+}
+]]>
+      </programlisting>
+    </example>
+   </section>
+  </section>
+
+  <section>
+   <sectioninfo>
+    <legalnotice>
+     <para>
+      This program is free software; you can redistribute it and/or
+      modify it under the terms of the <citetitle>GNU General Public
+      License</citetitle> as published by the Free Software Foundation;
+      either version 2 of the License, or (at your option) any later
+      version.
+     </para>
+     <para>
+      This program is distributed in the hope that it will be useful, but
+      WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      <citetitle>GNU General Public License</citetitle> for more details.
+     </para>
+     <para>
+      You may obtain a copy of the <citetitle>GNU General Public License</citetitle>
+      from the Free Software Foundation by visiting <ulink type="http"
+      url="http://www.fsf.org">their web site</ulink> or by writing to
+      <address>
+       Free Software Foundation, Inc.
+       <street>59 Temple Place</street> - Suite 330
+       <city>Boston</city>, <state>MA</state> <postcode>02111-1307</postcode>
+       <country>USA</country>
+      </address>
+     </para>
+    </legalnotice>
+   </sectioninfo>
+   <title>License</title>
+   <para></para>
+  </section>
+
+ </article>
+</book>
+

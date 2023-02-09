@@ -1,0 +1,194 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Client Configuration Examples</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title=""><link rel="up" href="ar01.html" title="apt4rpm"><link rel="previous" href="ar01s08.html" title="Feedback"><link rel="next" href="ar01s10.html" title="License"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Client Configuration Examples</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ar01s08.html">Prev</a> </td><th width="60%" align="center">apt4rpm</th><td width="20%" align="right"> <a accesskey="n" href="ar01s10.html">Next</a></td></tr></table><hr></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2509326"></a>Client Configuration Examples</h2></div></div><div></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2509332"></a>Client</h3></div></div><div></div></div><div class="example"><a name="example-aptate.minimal.xml"></a><p class="title"><b>Example 1. Minimal aptate configuration file</b></p><pre class="programlisting">
+      
+&lt;?xml version='1.0' encoding="iso-8859-1"?&gt;
+&lt;!DOCTYPE opt SYSTEM "file:///usr/share/apt4rpm/aptate.dtd"&gt;
+
+&lt;opt&gt;
+
+ &lt;!-- all files are relative to this path --&gt;
+ &lt;topdir&gt;/dist/&lt;/topdir&gt;
+
+ &lt;!-- structure 3 uses the language tag --&gt;
+ &lt;distribution id="redhat80" structure="3"&gt;
+  &lt;name&gt;redhat&lt;/name&gt;
+  &lt;version&gt;8.0&lt;/version&gt;
+  &lt;architecture&gt;i586&lt;/architecture&gt;
+  &lt;language&gt;en&lt;/language&gt;
+
+  &lt;component&gt;
+   &lt;name&gt;base&lt;/name&gt;
+   &lt;!--
+    imagine the full path to be /dist/rh80
+    in combination with a topdir = /dist the
+    url becomes
+   --&gt;
+   &lt;url&gt;../rh80&lt;/url&gt;
+  &lt;/component&gt;
+ &lt;/distribution&gt;
+
+&lt;/opt&gt;
+
+
+
+     </pre></div><div class="example"><a name="example-aptate.xml"></a><p class="title"><b>Example 2. A possible aptate configuration file</b></p><pre class="programlisting">
+      
+&lt;?xml version='1.0' encoding="iso-8859-1"?&gt;
+&lt;!DOCTYPE opt SYSTEM "file:///usr/share/apt4rpm/aptate.dtd"&gt;
+
+&lt;!--
+   This is an example aptate configuration file.  It shows most of aptate's
+   elements and element attributes.  A nice way to create this file is by
+   using xemacs in pgsml mode.  Xemacs in this mode will be of great help,
+   as it gives you a gui to make this configuration file.  Make sure though
+   that the filename ends at ".xml"!
+
+   All possibilities are described in the manual, that can be found at:
+   file:///usr/share/doc/packages/apt4rpm/dtd-manual/dtd-manual.book.home.html
+--&gt;
+
+&lt;opt
+  security-component="yes"
+  update-rpms='yes'
+&gt;
+
+  &lt;!-- all files are relative to this path --&gt;
+  &lt;topdir&gt;/dist/okna2002&lt;/topdir&gt;
+
+  &lt;!-- Information used to sign the apt repository --&gt;
+  &lt;authorization&gt;
+    &lt;name&gt;joe&lt;/name&gt;
+    &lt;email&gt;joe@users.sourceforge.net&lt;/email&gt;
+  &lt;/authorization&gt;
+
+  &lt;!-- It's not required to specify the protocol --&gt;
+  &lt;sources-list-file&gt;/dist/okna2002/apt&lt;/sources-list-file&gt;
+  &lt;sources-list-ftp&gt;/gw/suse/suse-8.1/apt/&lt;/sources-list-ftp&gt;
+  &lt;sources-list-http&gt;http://www.okna.rm/apt&lt;/sources-list-http&gt;
+
+  &lt;distribution id="man90"&gt;
+    &lt;name&gt;Mandrake&lt;/name&gt;
+    &lt;version&gt;9.0&lt;/version&gt;
+    &lt;architecture&gt;i386&lt;/architecture&gt;
+
+    &lt;component&gt;
+     &lt;name&gt;extra&lt;/name&gt;
+      &lt;url method='file'&gt;mandrex&lt;/url&gt;
+    &lt;/component&gt;
+  &lt;/distribution&gt;
+
+  &lt;distribution id='suse73'&gt;
+    &lt;name&gt;SuSE&lt;/name&gt;
+    &lt;version&gt;7.3&lt;/version&gt;
+    &lt;architecture&gt;i386&lt;/architecture&gt;
+
+    &lt;component&gt;
+      &lt;name&gt;extra&lt;/name&gt;
+      &lt;url method='file'&gt;extra&lt;/url&gt;
+      &lt;accept&gt;i386&lt;/accept&gt;
+      &lt;reject&gt;src&lt;/reject&gt;
+    &lt;/component&gt;
+
+    &lt;component update-rpms="yes"&gt;
+      &lt;name&gt;kde&lt;/name&gt;
+      &lt;url method='ftp'&gt;ftp.gwdg.de/pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/&lt;/url&gt;
+      &lt;!-- remove the hostname and directories: pub/.....supplementary/ --&gt; 
+      &lt;wget cutdirs='7'&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/applications&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/development&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/experimental&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/internationalization&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/source&lt;/excludedir&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;!--
+      The rpms won't be updated from this server as the attribute update-rpms
+      is missing.  This server can be used as back up server for the before
+      mentioned kde download server (ftp.gwdg.de).
+    --&gt;
+    &lt;component&gt;
+      &lt;name&gt;kde&lt;/name&gt;
+      &lt;url method='ftp'&gt;ftp.suse.com/pub/suse/i386/supplementary/KDE/update_for_7.3/base&lt;/url&gt;
+      &lt;!-- remove the hostname and directories pub/suse/i386/supplementary --&gt;
+      &lt;wget continue="no" cutdirs='4' /&gt;
+    &lt;/component&gt;
+
+    &lt;component update-rpms="yes"&gt;
+      &lt;name&gt;update&lt;/name&gt;
+      &lt;url method='ftp'&gt;ftp.gwdg.de/pub/linux/suse/ftp.suse.com/suse/i386/update/7.3&lt;/url&gt;
+      &lt;wget cutdirs='7'&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/beo1&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/doc2&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/emu1&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de1&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de2&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de3&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de9&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.2.19-20011026&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.4.10-20011026&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.4.16-20011220&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/zq1&lt;/excludedir&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;component update-rpms="yes" list-most-recent="yes"&gt;
+      &lt;name&gt;ximian&lt;/name&gt;
+      &lt;url method='ftp'&gt;ftp.ximian.com/pub/ximian-gnome/suse-73-i386&lt;/url&gt;
+      &lt;wget cutdirs='1'&gt;
+        &lt;excludedir&gt;pub/ximian-gnome/suse-73-i386/source&lt;/excludedir&gt;
+        &lt;add-arg&gt;--proxy=off --reject *-devel-*&lt;/add-arg&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;component update-rpms="yes"&gt;
+      &lt;name&gt;mozilla&lt;/name&gt;
+      &lt;url method='file'&gt;/dist/okna2002/download&lt;/url&gt;
+      &lt;!--
+         Make sure that the script stores the downloaded rpms in the 
+         location that is specified in the url.  The script can be any
+         arbitrary script, taking $topdir as 1st argument and $urldir as 
+         2nd argument (handed over to the script by aptate).  It can be
+         wrapper around wget, rsync, etc.
+      --&gt;
+      &lt;script&gt;/usr/bin/local/mirrorit&lt;/script&gt;
+    &lt;/component&gt;
+
+    &lt;component update-rpms="yes"&gt;
+      &lt;name&gt;opera&lt;/name&gt;
+      &lt;url method='ftp'&gt;sunsite.cnlab-switch.ch/mirror/opera/linux/600/&lt;/url&gt;
+      &lt;wget cutdirs='1'&gt;
+        &lt;add-arg&gt;--proxy=off --reject *.deb --reject *.bz2 --reject *.gz --reject *shared*&lt;/add-arg&gt;
+        &lt;excludedir&gt;mirror/opera/linux/600/tp3&lt;/excludedir&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;component update-rpms="yes"&gt;
+      &lt;name&gt;nvidia&lt;/name&gt;
+      &lt;url method='ftp'&gt;ftp://205.158.109.140/XFree86_40&lt;/url&gt;
+      &lt;wget&gt;
+        &lt;excludedir&gt;XFree86_40/0.9-*&lt;/excludedir&gt;
+        &lt;excludedir&gt;XFree86_40/1.0-1*&lt;/excludedir&gt;
+        &lt;excludedir&gt;XFree86_40/1.0-2313&lt;/excludedir&gt;
+        &lt;excludedir&gt;XFree86_40/nforce&lt;/excludedir&gt;
+        &lt;add-arg&gt;--accept *suse73*&lt;/add-arg&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+  &lt;/distribution&gt;
+&lt;/opt&gt;
+
+
+
+     </pre></div><div class="example"><a name="example-sources.list"></a><p class="title"><b>Example 3. sources.list</b></p><pre class="programlisting">
+# created by aptate
+rpm     [MR]  file:/dist/apt okna/wow-i586 localrpms
+rpm     [MR]  ftp://ftp.gwdg.de/pub/apt okna/wow-i586  extra kde update x base kde3 security
+rpm-src [MR]  ftp://ftp.gwdg.de/pub/apt okna/wow-i586  extra kde update x base kde3 security
+     </pre></div><div class="example"><a name="example-vendors.list"></a><p class="title"><b>Example 4. vendors.list</b></p><pre class="programlisting">
+
+simple-key "MR"
+{
+   Fingerprint "059AB253B32F6340689E0AB2F48394E73F2B1DDC";
+   Name "Marcel Ritter &lt;Marcel.Ritter@rrze.uni-erlangen.de&gt;";
+}
+
+      </pre></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ar01s08.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ar01.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="ar01s10.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Feedback </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> License</td></tr></table></div></body></html>

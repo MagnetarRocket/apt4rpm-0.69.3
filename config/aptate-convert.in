@@ -1,0 +1,670 @@
+#! @PERL@ -w
+##################################################################
+#
+# XML parser to converting aptate-0.50 xml configuration files
+# into current aptate's configuration file format.
+#
+# Copyright (c) 2002, Ralf Corsepius <corsepiu@users.sourceforge.net>
+#
+# Send suggestions to: apt4rpm-devel@lists.sourceforge.net
+# Homepage: http://apt4rpm.sourceforge.net
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# For a copy of the GNU General Public License, visit
+# http://www.gnu.org or write to the Free Software Foundation, Inc.,
+# 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+##################################################################
+
+BEGIN
+{
+  my $perllibdir = $ENV{'perllibdir'} 
+    || '@APTATEDATADIR@' ;
+  unshift @INC, (split ':', $perllibdir);
+}
+
+use Aptate::Version;
+
+use strict;
+use XML::LibXML;
+use Getopt::Long;
+
+# Options
+my $verbose = 0;
+my $merge = 1;
+my $dtd = '@APTATEDATADIR@' ;
+my $validate = 1; 
+my $purge = 1;
+my $expand = 0;
+
+sub version ();
+sub help ();
+
+sub getNodeWithComments($);
+sub sortNodes($$);
+
+# Internal helpers
+my $PROGRAM = 'aptate-convert';
+
+Getopt::Long::config ("bundling", "pass_through");
+Getopt::Long::GetOptions
+  (
+    'version'           => \&version,
+    'help'         	=> \&help,
+    'v|verbose+'	=> \$verbose,
+    'merge!'		=> \$merge,
+    'm'			=> \$merge,
+    'dtd=s'		=> \$dtd,
+    'validate!'		=> \$validate,
+    'purge!'		=> \$purge,
+    'expand!'		=> \$expand
+  ) or exit 1;   
+
+die "$0: wrong number of arguments.\n"
+  if ( $#ARGV != 0 );   
+my $infile = $ARGV[0];
+
+die "$0: input file missing.\n"
+  if ( not $infile );
+die "$0: input file $infile not found.\n"
+  if (not -e $infile);
+
+# Create a non-validating parser
+my $parser = XML::LibXML->new();
+$parser->validation(0);
+$parser->expand_entities(0);
+$parser->complete_attributes(0);
+$parser->keep_blanks(0); # Don't care about blanks
+
+# Parse the file
+my $doc = $parser->parse_file($infile)
+  or die "$0; Failed to open $infile.\n";
+
+# Get the root element
+my $root = $doc->documentElement();
+
+my %table = (
+  'opt'		=> \&parse_opt
+);
+die "$0: illegal document root node <", $root->nodeName(), ">\n"
+    if ( ! defined( $table{$root->nodeName()} ) );
+$table{$root->nodeName()}( $root );
+
+# Create a new document
+my $xmltext = "<?xml version=\'" . $doc->version() . "\'"
+  . " encoding=\"" . $doc->encoding() . "\"?>\n"
+  . "\<!DOCTYPE " . $doc->documentElement()->nodeName()
+  . " SYSTEM \"$dtd/aptate.dtd\">\n"
+  . $root->toString(1);
+
+# Switch-on advanced parser features
+# validate
+$parser->validation($validate);
+$parser->expand_entities(1);
+# complete attributes, because the Xml::Simple based aptate.pl can't.
+# FIXME: Once aptate.pl can complete attribute, this can be disabled
+$parser->complete_attributes($expand);
+$parser->keep_blanks(0);
+
+# Re-parse/validate the new document
+my $doc2 = $parser->parse_string( $xmltext );
+
+# Print the document to stdout
+print STDOUT $doc2->toString(1);
+
+exit 0;
+
+# Parser for document type <opt> == aptate.conf
+sub parse_opt($)
+{
+  my $opt = shift;
+
+  print STDERR "parse_opt\n" if ( $verbose );
+  {
+    my $n = $opt->firstChild;
+    while( $n )
+    {
+      my $next = $n->nextSibling;
+      my $name = $n->nodeName();
+     
+      if ( $name eq 'mirrorlist' ) {
+# Copy <opt><mirrorlist> to <opt><distribution><mirrorlist>
+        my @move = getNodeWithComments($n);
+
+        my @dists = $opt->findnodes("distribution");
+        foreach my $d ( @dists )
+        {
+          if ( !$d->findnodes( "mirrorlist" ) 
+            && !$d->findnodes( "components" ) )
+          {
+            foreach my $child ( @move )
+            {
+              $d->appendChild($child->cloneNode(1));
+            }
+          }
+        }
+        foreach my $child ( @move )
+        {
+          $opt->removeChild($child);
+        }
+	# aptate < 0.60 used 'wget'
+	# 0.60 <= aptate < 0.60.2 used 'wget-options'
+      } elsif ( ( $name eq 'wget' ) 
+        or      ( $name eq 'wget-options' ) )
+      {
+        for ( my $n1 = $n->firstChild; $n1; $n1 = $n1->nextSibling )
+        {
+          if ( $n1->nodeName() eq 'tries' ) {
+            my $tries = int($n1->textContent());
+            if ( $tries ne '0' ) {
+              $opt->setAttribute('wget-tries', $tries );
+            }
+          } elsif ( $n1->nodeName() eq 'wait' ) {
+            my $wait = int($n1->textContent('wait'));
+            if ( $wait ne '0' ) {
+              $opt->setAttribute('wget-wait', $wait );
+            }
+          }
+        }
+        $opt->removeChild( $n );
+      } elsif ( $name eq 'url_prefix' )
+      {
+        my $n1 = $n->firstChild;
+        while( $n1 )
+        {
+	  my $n2 = $n1->nextSibling;
+          my $name1 = $n1->nodeName();
+          if ( $name1 eq 'file' ) {
+            $n1->setNodeName( 'sources-list-file' );
+          } elsif ( $name1 eq 'ftp' ) {
+            $n1->setNodeName( 'sources-list-ftp' );
+          } elsif ( $name1 eq 'http' ) {
+            $n1->setNodeName( 'sources-list-http' );
+          }
+          $n1->parentNode()->removeChild($n1);
+	  $opt->insertBefore($n1,$n);
+	  $n1 = $n2;
+        }
+        $opt->removeChild( $n );
+      }
+      $n = $next;
+    }
+  }
+
+  my $n = $opt->firstChild;
+  while( $n )
+  {
+    my $next = $n->nextSibling;
+    my $name = $n->nodeName();
+
+    if ( $name eq 'directories' ) {
+# Move <opt><directories><*> to <opt><*>
+      my @move = ();
+      my $n1 = $n->firstChild;
+      while( $n1 )
+      {
+        my $next1 = $n1->nextSibling;
+        $n->removeChild($n1);
+        $opt->insertBefore($n1,$n);
+        $n1 = $next1;
+      }
+      $opt->removeChild($n);
+    } elsif ( $name eq 'bloat' ) {
+      # convert element to attribute
+      my $t = $n->textContent();
+      $t = 'yes' if ( $t eq '' );
+      if ( ( $t ne 'yes' ) || not $purge) {
+        $opt->setAttribute( $name, $t );
+      }
+      $opt->removeChild($n);
+    } elsif ( $name eq 'quiet' ) {
+      # convert element to attribute
+      my $t = $n->textContent();
+      if ( ($t ne '2') || not $purge) {
+        $opt->setAttribute( $name, $t );
+      }
+      $opt->removeChild($n);
+    } elsif ( $name eq 'follow' ) {
+      # convert element to attribute
+      my $t = $n->textContent();
+      if ( ($t ne 'no') || not $purge) {
+        $opt->setAttribute( $name, $t );
+      }
+      $opt->removeChild($n);
+    } elsif ( $name eq 'flat' ) {
+      # convert element to attribute
+      my $t = $n->textContent();
+      if ( ($t ne 'yes') || not $purge) {
+        $opt->setAttribute( $name, $t );
+      }
+      $opt->removeChild($n);
+    } elsif ( $name eq 'test' ) {
+      # remove, not supported anymore
+      my @move = getNodeWithComments($n);
+      foreach my $child ( @move ) { $opt->removeChild($child); }
+    } elsif ( $name eq 'update_rpms' ) {
+      # convert element to attribute
+      my $t = $n->textContent();
+      if ( $t ) {
+        if ( ($t ne 'no') || not $purge)
+        {
+          $opt->setAttribute( 'update-rpms', $t );
+        }
+      }
+      $opt->removeChild($n);
+    } elsif ( $name eq 'distribution' ) {
+      parse_distribution($n);
+    } elsif ( $name eq 'security' ) {
+      parse_security($n);
+    }
+    $n = $next;
+  }
+
+  if ( $opt->getAttribute( 'bad-rpms-mode' ) )
+  {
+    $opt->setAttribute( 'bad-rpm-mode', 
+      $opt->getAttribute( 'bad-rpms-mode' ) );
+    $opt->removeAttribute( 'bad-rpms-mode' );
+  }
+
+  if ( $opt->getAttribute( 'update_rpms' ) )
+  {
+    $opt->setAttribute( 'update-rpms', 
+      $opt->getAttribute( 'update_rpms' ) );
+    $opt->removeAttribute( 'update_rpms' );
+  }
+
+  if ( $opt->getAttribute( 'quiet' ) )
+  {
+    my $val = 6 - int($opt->getAttribute( 'quiet' ));
+    $val = 0 if ( $val < 0 );
+    if ( ( $val != 3 ) || not $purge ) {
+      $opt->setAttribute( 'verbose', $val );
+    }
+    $opt->removeAttribute( 'quiet' );
+  }
+
+  my @tags = ( 'topdir', 'sharedir', 'authorization',
+      'sources-list-file', 'sources-list-ftp', 'sources-list-http',
+      'distribution' );
+  sortNodes( $opt, \@tags );
+}
+
+sub parse_distribution($)
+{
+  my $d = shift;
+
+  print STDERR "parse_distribution\n" if ( $verbose );
+
+  if ( $merge ){
+    my $n = $d->firstChild;
+    while ( $n )
+    {
+      my $next = $n->nextSibling;
+      my $name = $n->nodeName();
+      if ( $name eq 'mirrorlist' ) {
+        my $dir = `dirname $infile`; chomp $dir;
+# merge a <mirrorlist> into <components>
+	my $mirrorfile = $dir . '/' . $n->textContent();
+        my $mirror = $parser->parse_file( $mirrorfile )
+          or die "$0: failed to open ", $mirrorfile, "\n";
+        my $mirror_root = $mirror->documentElement();
+        die "$0: expected document root node <components>\n",
+          "got ", $mirror_root->nodeName(), "\n",
+          "for mirrorfile ", $n->textContent(), "\n"
+            if ( $mirror_root->nodeName() ne 'components' );
+        $n->replaceNode( $mirror_root->cloneNode(1) );
+        $mirror->removeChild($mirror_root);
+      }
+      $n = $next;
+    }
+  }
+
+  {
+# Convert <components>* -> *
+    my $n = $d->firstChild;
+    while( $n )
+    {
+      my $next = $n->nextSibling;
+      my $name = $n->nodeName();
+      if ( $name eq 'components' ) {
+        my $child = $n->firstChild;
+        while( $child )
+        {
+          my $next1 = $child->nextSibling;
+          $n->removeChild($child);
+          $d->appendChild($child);
+          $child = $next1 ;
+        }
+        $d->removeChild($n);
+        $next = $n->nextSibling();
+      }
+      $n = $next;
+    }
+  }
+
+  my $n = $d->firstChild;
+  while( $n )
+  {
+    my $next = $n->nextSibling;
+    my $name = $n->nodeName();
+# FIXME: Not yet
+    if ( $name eq 'name' ) {
+#      # convert element to attribute
+#      $d->setAttribute( $name, $n->textContent() );
+#      $d->removeChild($n);
+    } elsif ( $name eq 'version' ) {
+#      # convert element to attribute
+#      $d->setAttribute( $name, $n->textContent() );
+#      $d->removeChild($n);
+    } elsif ( $name eq 'architecture' ) {
+#      # convert element to attribute
+#      $d->setAttribute( $name, $n->textContent() );
+#      $d->removeChild($n);
+    } elsif ( $name eq 'component' ) {
+      parse_component($n);
+    }
+    $n = $next;
+  }
+
+# Fixup id
+  if ( not $d->getAttribute('id') )
+  {
+    my $dva = $d->findvalue('name')
+      . '-' . $d->findvalue('version')
+      . '-' . $d->findvalue('architecture');
+    $d->setAttribute('id', $dva );
+  }
+}
+
+# Parse for document type <components> == mirrorlist
+sub parse_components($)
+{
+  my $d = shift;
+
+  my $n = $d->firstChild;
+  while( $n )
+  {
+    my $next = $n->nextSibling;
+    my $name = $n->nodeName();
+    if ( $name eq 'component' ) {
+      parse_component($n);
+    }
+    $n = $next;
+  }
+}
+
+sub parse_component($)
+{
+  my $d = shift;
+  print STDERR "parse_component\n" if ( $verbose );
+
+  # Remove, not supported anymore
+  $d->removeAttribute('id');
+
+  my $n = $d->firstChild;
+  while( $n )
+  {
+    my $next = $n->nextSibling;
+    my $name = $n->nodeName();
+    if ( $name eq 'wget' ) {
+      parse_wget($n);
+    } elsif ( $name eq 'active' ) {
+      # convert element to attribute
+      my $t = $n->textContent();
+      $t = 'yes' if ( $t eq '' );
+      if ( ( $t ne 'yes' ) || not $purge) {
+        $d->setAttribute( $name, $t );
+      }
+      $d->removeChild($n);
+    } elsif ( $name eq 'update_rpms' ) {
+      # convert element to attribute
+      my $t = $n->textContent();
+      $t = 'yes' if ( $t eq '' );
+      if ( ( $t ne 'no' ) || not $purge) {
+        $d->setAttribute( 'update-rpms', $t );
+      }
+      $d->removeChild($n);
+    }
+    $n = $next;
+  }
+
+  if ( $d->getAttribute( 'update_rpms' ) )
+  {
+    $d->setAttribute( 'update-rpms', 
+      $d->getAttribute( 'update_rpms' ) );
+    $d->removeAttribute( 'update_rpms' );
+  }
+
+  {
+    # Convert <component><wget><url> to <component><url>
+    # IMO, they should have been kept, but ...
+
+    # get all <component><wget><url>s
+    my @wgeturls = $d->findnodes( 'wget/url' );
+    if ( @wgeturls ) {
+      # remove all <component><url>s
+      my @urls = $d->findnodes( 'url' );
+      foreach my $u ( @urls ) { $d->removeChild($n); };
+
+      # Use the last <component><wget><url> as new <component><url>
+      my $newurl = $wgeturls[$#wgeturls];
+      $d->appendChild($newurl->cloneNode(1));
+
+      # remove all <component><wget><url>s
+      foreach my $u ( @wgeturls ) { $u->parentNode->removeChild($u); };
+    }
+  }
+  my @tags = ( 'name', 'url', 'accept', 'reject', 'wget', 'script' );
+  sortNodes( $d, \@tags );
+}
+
+sub parse_wget($)
+{
+  my $d = shift;
+
+  my $n = $d->firstChild;
+  while( $n )
+  {
+    my $next = $n->nextSibling;
+    my $name = $n->nodeName();
+    if ( $name eq 'cutdirs' ) {
+      # Convert element to attribute
+      my $t = $n->textContent();
+      $t = '0' if ( $t eq '' );
+      if ( ( $t ne '0' ) || not $purge) {
+        $d->setAttribute( $name, $t );
+      }
+      $d->removeChild($n);
+    } elsif ( $name eq 'continue' ) {
+      # convert element to attribute
+      my $t = $n->textContent();
+      $t = 'yes' if ( $t eq '' );
+      if ( ( $t ne 'yes' ) || not $purge) {
+        $d->setAttribute( $name, $t );
+      }
+      $d->removeChild($n);
+    } elsif ( $name eq 'add_arg' ) {
+      $n->setNodeName('add-arg');
+    } elsif ( $name eq 'excludedirs' ) {
+      my $n1 = $n->firstChild;
+      while( $n1 )
+      {
+        my $next1 = $n1->nextSibling;
+        $n->removeChild($n1);
+        if ( $n1->nodeName eq 'dir' )
+        { 
+           $n1->setNodeName( 'excludedir' );
+        }
+        $d->insertBefore($n1,$n);
+        $n1 = $next1;
+      }
+      $d->removeChild($n);
+    }
+    $n = $next;
+  }
+}
+
+sub parse_security($)
+{
+  my $d = shift;
+
+  print STDERR "parse_security\n" if ( $verbose );
+
+  my $n = $d->firstChild;
+  while( $n )
+  {
+    my $next = $n->nextSibling;
+    my $name = $n->nodeName();
+    if ( $name eq 'mode' ) {
+      # Check if there's a <hashfile_signature> node
+      my @sigs = $d->findnodes( "child::hashfile_signature" );
+      if ( @sigs ) {
+        # Remove
+        my @move = getNodeWithComments($n);
+        foreach my $child ( @move ) { $d->removeChild($child); }
+      } else {
+        # Rename
+        $n->setNodeName( 'hashfile_signature' );
+      }
+    } elsif ( $name eq 'gpg_key' ) {
+      # Rename
+      $n->setNodeName( 'authorization' );
+      my @move = getNodeWithComments( $n );
+      foreach my $n1 ( @move ) {
+        $n1->parentNode->removeChild( $n1 );
+        $d->parentNode->insertBefore( $n1, $d );
+      }
+    }
+    $n = $next;
+  }
+
+  $n = $d->firstChild;
+  while( $n )
+  {
+    my $next = $n->nextSibling;
+    my $name = $n->nodeName();
+
+# Tags with '','no','yes' contents, with
+# empty contents ('') meaning 'yes' and   
+# absence of the tag meaning 'no'   
+    if ( ( $name eq 'sec_comp' )
+      or ( $name eq 'hashfile_signature' )
+      or ( $name eq 'signed_pkgs_only' ) )
+    {
+      # convert element to attribute
+      my $t = $n->textContent();
+      $t = 'yes' if ( $t eq '' );
+      if ( ( $t ne 'no' ) || not $purge) {
+        $d->setAttribute( $name, $t );
+      }
+      $d->removeChild($n);
+    }
+    $n = $next;
+  }
+  my $opt = $d->parentNode;
+
+  if ( my $v = $d->getAttribute( 'sec_comp' ) )
+  {
+    $opt->setAttribute('security-component', $v );
+    $d->removeAttribute( 'sec_comp' );
+  }
+  if ( my $v = $d->getAttribute( 'signed_pkgs_only' ) )
+  {
+    $opt->setAttribute('signed-pkgs-only', $v); 
+    $d->removeAttribute( 'signed_pkgs_only' );
+  }
+  if ( my $v = $d->getAttribute( 'hashfile_signature' ) )
+  {
+    $opt->setAttribute('sign-repository', $v );
+    $d->removeAttribute( 'hashfile_signature' );
+  }
+
+  # Remove self
+  $d->parentNode->removeChild( $d );
+}
+
+# some utility functions
+
+sub version ()
+{
+  print <<EOF;
+$PROGRAM $VERSION
+EOF
+
+  exit 0;
+}
+
+# NOTE: command line option --dtd is intentionally non-documented
+sub help ()
+{
+  print <<EOF;
+Usage: $PROGRAM [options] infile
+
+Convert aptate-0.50's xml-configuration files (aptate.conf and mirrorlist) into
+aptate-${VERSION}'s xml-syntax. Output will be generated to stdout.
+
+Options:
+        --help                  print this help, then exit.
+        --version               print version number, then exit.
+    -v, --verbose               be verbose.
+
+    -m, --[no]merge             merge mirrorfiles into aptate.confs
+				(default:enabled)
+        --[no]validate          disable/enable xml-validation of generated file 
+                                (default:enabled)
+        --[no]purge             remove xml-attributes which are set to defaults.
+                                (default:enabled)
+        --[no]expand            expand implicitly set xml-attributes
+				(default:disabled)
+
+Report bugs to <$BUGS>
+EOF
+
+  exit 0;
+}
+
+sub getNodeWithComments($)
+{
+  my $n = shift ;
+  my @move = ( $n );
+  for ( my $i = $n->previousSibling(); 
+        $i && ( $i->nodeName eq 'comment' );
+        $i = $i->previousSibling() )
+  {
+    unshift @move, $i;
+  }
+  return @move;
+}
+
+# Sort all children in node $n 
+# to match the order given by list @tags
+sub sortNodes($$)
+{
+  my $n = shift ;
+  my $tags = shift ; # Reference to list!
+
+  foreach my $tag ( @{$tags} )
+  {
+      my @dists = $n->findnodes($tag);
+      foreach my $d ( @dists )
+      {
+        my @move = getNodeWithComments($d);
+
+        foreach my $child ( @move )
+        {
+          $n->removeChild($child);
+          $n->appendChild($child);
+        }
+      }
+  }
+}

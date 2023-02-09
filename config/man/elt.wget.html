@@ -1,0 +1,39 @@
+<p>Attribute explanation:</p>
+<p>
+ <table class='synopsis' border='1' cellspacing='0' cellpadding='4'>
+  <thead>
+   <th>variable</th>
+   <th>explanation</th>
+   <th>cla</th>
+  </thead>
+  <tr>
+   <td valign=top>continue</td>
+   <td>This is a wget option.
+    The <a href=man:wget target=_blank>wget manual</a> states:<br>
+    continue getting a partially-downloaded file.  This is useful when you
+    want to finish up a download started by a previous instance of wget, or by
+    another program.  More about the wget continue option in the wget manual.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>cutdirs</td>
+   <td>This is a wget option.
+    The <a href=man:wget target=_blank>wget manual</a> states:<br>
+    Ignore number directory components.  This is useful for getting a
+    fine-grained control over the directory where recursive retrieval will be
+    saved.  More about the wget cut-dirs option in the wget manual.<br>
+    <br>
+    The rpms being downloaded are stored under the
+    &lt;sharedir>/&lt;dist-id>/update/ plus the directory obtained
+    from the cutdirs action.<br>
+    <br>
+    Important to note; in case this option is used (cutdirs > 0) the wget
+    option -no-host-directories is used by aptate too.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+ <table>
+</p>
+<p><small>cla: command line argument</small></p>
+

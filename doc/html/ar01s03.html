@@ -1,0 +1,77 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Setup</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title=""><link rel="up" href="ar01.html" title="apt4rpm"><link rel="previous" href="ar01s02.html" title="Introduction"><link rel="next" href="ar01s04.html" title="Crypto"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Setup</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ar01s02.html">Prev</a> </td><th width="60%" align="center">apt4rpm</th><td width="20%" align="right"> <a accesskey="n" href="ar01s04.html">Next</a></td></tr></table><hr></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2496671"></a>Setup</h2></div></div><div></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2496676"></a>Server</h3></div></div><div></div></div><h4><a name="id2496682"></a>Install apt rpm packages</h4><p>Make sure you have the rpm packages <span class="emphasis"><em>apt</em></span>, 
+     and it's dependend packages (perl-)XML-LibXML, (perl-)XML-LibXML-Common,
+     (perl-)XML-NamespaceSupport, (perl-)XML-SAX.  Depending on the package
+     distributor you may need apt-server.
+
+     If you do not have these packages you can download them from the
+     download page of the 
+     <a href="http://apt4rpm.sourceforge.net/" target="_top">apt4rpm</a> website or
+     just create them by using the .spec files (see the comments at the top
+     of the .spec files for more information).
+    </p><h4><a name="id2496706"></a>Build with:</h4><p><span><b class="command">rpmbuild -ba apt.spec</b></span></p><h4><a name="id2496717"></a>Install with:</h4><p><span><b class="command">rpm -Uvh apt apt-libs apt-server apt4rpm</b></span></p><p>(short form here - use the created filenames with version number).
+     Repeat the same command sequence for the XML perl modules, if needed.
+    </p><h4><a name="id2496733"></a>Configuration setup</h4><p>Change the configuration file aptate.conf to your needs. 
+     It can be stored in the directories:
+     <tt class="filename">/etc/apt/</tt> or
+     <tt class="filename">$HOME/.aptate/</tt>.
+    </p><p>Aptate.conf, or any other name in which case the argument
+     --config-file must be used, holds the configuration information needed to
+     run aptate.  The configuration file is xml formatted and it follows 
+     the rules layed down in file aptate.dtd.
+     The information ranges from defining the top directory up to describing
+     a linux distribution.
+    </p><p>The configuration file defines a list of sources where RPM packages
+     can be found.
+     Currently only local directories and FTP servers can be used.
+     Two example configuration files,
+     <a href="ar01s09.html#example-aptate.minimal.xml" title="Example 1. Minimal aptate configuration file">Example 1, “Minimal aptate configuration file”</a> and 
+     <a href="ar01s09.html#example-aptate.xml" title="Example 2. A possible aptate configuration file">Example 2, “A possible aptate configuration file”</a> are included in this manual,
+    </p><p>If you configured everything to your needs you can start creating the 
+     needed databases by running <span class="application">aptate</span>. Quite some
+     effort have been spend to add error messages - so you should get hints if
+     something goes wrong. <span class="application">Aptate</span> will also create 
+     example configuration files for the client machine (sources.list and 
+     vendors.list) that need to be copied to the clients config directory
+     <tt class="filename"><a name="directory"></a>/etc/apt/</tt>.
+     <a href="ar01s09.html#example-sources.list" title="Example 3. sources.list">Example 3, “sources.list”</a> shows a sources.list
+     file and an example of the vendors.list file is shown in
+     <a href="ar01s09.html#example-vendors.list" title="Example 4. vendors.list">Example 4, “vendors.list”</a>.
+    </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2449056"></a>Client</h3></div></div><div></div></div><h4><a name="id2449061"></a>Install APT RPM packages</h4><p>The Client requires the package <span class="emphasis"><em>apt</em></span> and
+     depending on the distributor <span class="emphasis"><em>apt-libs</em></span> as well.
+    </p><h4><a name="id2449076"></a>Configure setup</h4><p>Get the configuration files (sources.list and eventually 
+     vendors.list) and install them in 
+     <tt class="filename">/etc/apt</tt>.
+     If you want to use authentication with <span class="application">apt</span> - 
+     make sure you have all needed GPG/PGP keys installed on the server/client.
+    </p><h4><a name="id2447986"></a>First steps</h4><p>To check if your setup is correct, try: 
+     <span><b class="command">apt-get update</b></span>
+    </p><p>
+     This will copy the databases to your local harddisk (if
+     everything is ok) or complain (mainly if sources.list is not correct).
+    </p><p>You should check your currently installed packages status with:
+     <span><b class="command">apt-get check</b></span>
+    </p><p>
+     This will make sure that you have no unresolved dependencies between
+     installed packages. If it complains, that this is not the case try:
+     <span><b class="command">apt-get -f install</b></span>
+    </p><p>
+     which will install all packages, that are needed by already
+     installed packages.
+    </p><p>If all this went ok, try: <span><b class="command">apt-get -s upgrade</b></span>
+    </p><p>to see if there are any new packages available.  The -s argument
+     tells apt-get to simulate the command (nothing will be installed).
+     </p><p>There is a second mode for upgrade called 
+     <span class="emphasis"><em>dist-upgrade</em></span> In contrast to 
+     <span class="emphasis"><em>upgrade</em></span> this will also install newer 
+     packages that require the removal or installation of extra packages.
+    </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2448062"></a>Next steps</h3></div></div><div></div></div><p>There is much to tell about apt, how it can be used and how
+         apt can be tuned according your desires.  However, this is beyond the
+         scope of this manual.  At the
+         <a href="http://apt4rpm.sourceforge.net" target="_top">apt4rpm</a>
+         website a link called related
+         matrial can be found.  The page behind that link holds many references
+         to apt howto's, manuals, etc.  This page is worth to be visited,
+         especially when you're having questions, are stuck and the like!
+         Or start reading the apt man pages 
+         (<span><b class="command">man apt-get</b></span> or <span><b class="command">apropos apt</b></span>).
+        </p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ar01s02.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ar01.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="ar01s04.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Introduction </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Crypto</td></tr></table></div></body></html>

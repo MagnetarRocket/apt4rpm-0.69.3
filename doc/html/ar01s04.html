@@ -1,0 +1,65 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Crypto</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title=""><link rel="up" href="ar01.html" title="apt4rpm"><link rel="previous" href="ar01s03.html" title="Setup"><link rel="next" href="ar01s05.html" title="Aptate configuration"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Crypto</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ar01s03.html">Prev</a> </td><th width="60%" align="center">apt4rpm</th><td width="20%" align="right"> <a accesskey="n" href="ar01s05.html">Next</a></td></tr></table><hr></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2448100"></a>Crypto</h2></div></div><div></div></div><p>Just a very few words about public key cryptography (for indepth 
+    information you should read the GPG-HOWTO).
+   </p><p>Public key crypto systems are based on a key pair consisting of a 
+    secret and a public key. The secret key can be used by its owner to 
+    sign or encrypt files, while the public key can be used to prove the 
+    origin of files.
+   </p><p>This section is a short introduction in the GnuPG features you
+    might need with apt4rpm.
+   </p><p>This is especially true if you use the
+    <i class="parameter"><tt>signed-pkgs-only</tt></i> which means only
+     signed packages are used for updates. You need to have the corresponding
+     public key on your key ring to validate those packages.
+   </p><p>Most distributions have the vendor key attached by default to root's
+    key ring. However aptate supports all operations to be done by a non-root
+    user (for security reasons), and this one is likely to start with an empty
+    key ring (which might cause all packages to be marked "insecure" and to
+    be dropped). 
+   </p><div class="important" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Important</h3><p>If you get this behaviour, make sure to check your key ring!</p></div><p>For further information visit the
+    <a href="http://www.gnupg.org" target="_top">GPG</a> homepage and the
+    <a href="http://apt4rpm.sourceforge.net/ref.html" target="_top">related matrial</a>
+    webpage at the apt4rpm website.  Here you find at least 1 reference to
+    "Signing rpms with gpg".
+   </p><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2448171"></a>Server</h3></div></div><div></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2448176"></a>Signed repositories</h4></div></div><div></div></div><p>A signed repository is required if your apt repository is being
+      mirrored and you want to prevent that others are sneaking in faulty
+      packages.
+     </p><p>Create a key: <span><b class="command">gpg --gen-key</b></span></p><p>You are asked a lot of questions - if unsure simply press return.
+      If you get some messages about "missing entropy" and the program seems
+      to hang - simply do something on your system -&gt; gpg is still alive!
+      But it may take some time.
+     </p><p>After you finished you can check for your new key by typing:
+      <span><b class="command">gpg --list-keys</b></span>
+     </p><p>If you want to use encrypted repositories you need to export the
+      corresponding key to your client machines. To do so type
+      (replace <span class="emphasis"><em>EMAIL</em></span> with the e-mail address you entered 
+      when creating your key pair):
+      <span><b class="command">gpg --armour --export EMAIL &gt; /tmp/public.key</b></span>
+     </p><p>Before creating the repository databases by calling
+      <span class="application">aptate</span>, make sure to change the following
+      values in your aptate.conf file:
+      (<span class="emphasis"><em>MYKEY</em></span> is shorthand for the key)
+      </p><pre class="programlisting">
+       <tt class="sgmltag-starttag">&lt;security&gt;</tt>
+        <tt class="sgmltag-starttag">&lt;hashfile_signature&gt;</tt>yes<tt class="sgmltag-endtag">&lt;/hashfile_signature&gt;</tt>
+        <tt class="sgmltag-starttag">&lt;gpg_key&gt;</tt>
+         <tt class="sgmltag-starttag">&lt;name&gt;</tt>MYKEY<tt class="sgmltag-endtag">&lt;/name&gt;</tt>
+         <tt class="sgmltag-starttag">&lt;email&gt;</tt>EMAIL<tt class="sgmltag-endtag">&lt;/email&gt;</tt>
+        <tt class="sgmltag-endtag">&lt;/gpg_key&gt;</tt>
+       <tt class="sgmltag-endtag">&lt;/security&gt;</tt>
+      </pre><p>
+     </p><p>Or use the corresponding arguments options, which are respectively:
+      --gpg-key and --gpg-key-email.
+     </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2448318"></a>Signed packages</h4></div></div><div></div></div><p>To sign RPM packages you need to tell rpm what key to use. This can
+      be done by entries in your <tt class="filename">$HOME/.rpmmacros</tt> file.
+      Replace <span class="emphasis"><em>EMAIL</em></span> in the following example with your
+      GPG key pair e-mail adress.
+      </p><pre class="programlisting">
+       %_signature gpg
+       %_gpg_name EMAIL
+      </pre><p>
+      After you did this you can use <span><b class="command">rpm --addsign *.rpm</b></span>
+      to add your signature to existing RPM files.  If you build new ones 
+      make sure to add option <i class="parameter"><tt>--sign</tt></i>.
+     </p></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2448363"></a>Client</h3></div></div><div></div></div><p>Import the repository key on the client: 
+      <span><b class="command">gpg --import  /tmp/public.key</b></span>
+     </p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ar01s03.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ar01.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="ar01s05.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Setup </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Aptate configuration</td></tr></table></div></body></html>

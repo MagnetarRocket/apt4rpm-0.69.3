@@ -1,0 +1,334 @@
+Version 0.69.3 - 2005-03-03
+	- Support bash-3.x trap signal
+	- Support directory with spaces
+	- POSIX fixes
+	- Prevent rpm warning message about 'incompatible rpm headers'
+	- Added an exit value that telling 1 of more distid's were locked
+	- Many code improvements
+
+Version 0.69.0 - 2004-10-04
+	- The component and base directories are now renewed instead of
+	  the higher level (apt archive) directory.  This makes it possible
+	  that interleaved archives (like: dist/4.3-i386 and win/4.3-i386/nl
+	  can co-exist in 1 repository.  Before the archive win/4.3-i386/nl was
+	  removed, when the win/4.3-i386 is installed.
+	- Yum repositories are now installed in ARCHIVE_ROOT
+	- Added support to create metadata package repositories.
+	  Depends on createrepo: http://linux.duke.edu/metadata/
+	- The locking mechanism has been changed, it is now possible to run
+	  multiple aptate instance for 1 distributor.
+        - Bug fixes
+	- Performance improvements
+
+Version 0.68.2 - 2004-05-20
+	- Added YUM support
+	- Change default for <opt security-component> to "no"
+	- Fixed a bug if the rpm --requires output does not end with a
+	  carriage return
+	- Pass KEY_NAME to add_sourceslist_examples if using signed
+	  repositories.
+	- Generate default sources.list.FILE only if no <sources-list-*> tag
+	  is given.
+
+Version 0.67.0 - 2004-01-20
+	- Added 2 configuration options;
+ 	  distribution::process activates or de-activates the processing of
+	  archive.  This may be usefull for archives that e.g. have no update
+	  activaty or in case the vendor discontinued the distribution.
+	  When processing is de-activated (process="no") the actual apt archive
+	  remains to exist, but it will not be updated.
+	  component::scan activates or de-activates scanning of the rpm
+	  directory. This is usefull for rpm directories that won't change
+	  anymore, are stored on removable media, such as cd, dvd,
+	  usb sticks, etc. 
+
+Version 0.66.0 - 2003-12-30
+	- A grep construction has been altered to work around a bug in grep.
+	- An additional directory tag to further customize the repository 
+	  directory has been added to the configuration file (aptate dtd).
+	  The directory can be specified with tag <repdir>.
+	- Perl script aptate-config has been converted into a perl module
+ 	  Aptate::Config.
+	- Documentation converted from sgml to xml docbook 4.  The documentation
+	  is now processed with xmlto.
+	- Build method improved.
+	
+Version 0.65.3 - 2003-11-16
+	- Fixed a buffer overflow bug in case the apt repository is stored
+	  on a huge (several GB) filesystem,
+	- Added time left needed to build a cache indicator.
+	- The shared directory can be populated relative as well as
+	  absolute now.
+	- Make enviroment updated.
+	- Documentation updated.
+
+Version 0.65.2 - 2003-08-30
+	- Fixed the incorrect handling of the config file in case the
+	  file was located in the current working directory
+
+Version 0.65.1 - 2003-08-18
+	- The contents list (contlist) was incorrectly created, this release
+	  fixes it.
+
+Version 0.65 - 2003-08-12
+	- The backup repository "*.old" is not created anymore.  A disk space
+	  available check is performed before the old repository is replaced
+	  with the newly created one.
+	- The number of MD5 failures encountered in a cache are now reported
+	  in "apt repository creation stage".
+	- changed LANG=en_US to the portable LANG=C.
+	- the date string in the example source.list files is now reported
+	  in English. 
+	- The script compare_rpm_version has been optimized, the output format
+	  has changed and an --allarchs command line option has been added.
+	- The format of the most recent packages list (mrlist*) have changes,
+	  the rpm name, version, release, architecture and package size are now
+	  seperate fields.
+	- The component name is now included in the progress message that
+	  reports corrupted or md5 failed rpms.  Those message can now be
+	  easily grepped for as they both contain the pattern ">>".
+
+Version 0.64.4 - 2003-05-03
+	- Bad packages are now displayed at exit.
+	- RPMs are now correctly analysed if used in a non en_US environment.
+	- RPMs with an incorrect md5 sum, or packages that are just corrupt
+	  are now handled the same.
+	- Corrupt rpms figures are now displayed.
+	- aptatemod has been removed from the rpm spec file.
+
+Version 0.64.3 - 2003-04-12
+	- Fixed a progress message redirected to an incorrect output stream
+	- Removed cache conversion code
+	- Improved the most recent list algorithm.  RPMs starting with a
+	  string in their version of release id were not recognized
+	- Updated bootstrap to work with the latest version of automake
+	- Improved the find mechanism in case rpms are searched for with
+	  find and the '-follow' argument is activated.  The '-follow'
+	  argument is now accompanied with the argument -xtype f.  This will
+	  include files only (links are skipped).
+	- In quiet mode "done" is now printed during the apt database
+	  creating stage, if the generation of the database has finished.
+
+Version 0.64.2 - 2003-03-16
+	- Corrected some spelling error in error messages
+	- Argument "quiet" is now working again
+	- The temp directory is now created more secure, using mktemp
+	- Rpms are stored in right directory when mirrored
+	- Compressed pkglist files are created even if the uncompressed
+	  pkglist is empty.
+
+Version 0.64.1 - 2003-02-01
+	- Preparations have been made to add the possibility to save an apt
+	  repository to CD.  This resulted in a major reshuffling of the code.
+	- Improved locking mechanism.
+	- Changed output.
+	- Some bugs have been fixed/code cleanup
+	- Due to the CD functionality preparation there is an undocumented
+	  argumented --action available.  It can take 2 values; server (default)
+	  and mirror.
+
+Version 0.64 - 2003-01-21
+	This is major feature enhancement release.
+	- The archive naming scheme is not strict anymore.  There are 3
+	  predefined schemes present and the 4th one allows any naming scheme
+	  the user desires.
+	- Fixed a bug in the example/sources.list.FILE.
+	- Minor layout updates to error/progress messages.
+	- Fixed an incorrect error message in case the apt repository is 
+	  writable, but the topdir is not.
+	- An audit has been added to detect 0 byte *bz2 database files
+	  (the root cause of this behaviour is not known).
+	- Documentation update.
+
+Version 0.63.2 - 2003-01-03
+	This is a maintenance release.
+	- The last remaining hard coded archive path (../../../..) has been
+	  replaced by a variable.
+	- The possibility to create a test repository for a non flat apt
+	  repository had been removed.  It is not possible to support this
+	  repository type 100% reliable.
+	- The number of added and removed rpms is reported instead of the
+	  total number.
+	- Updated/added progress markers.
+	- Moved code that was written multiple times into a function.
+	- Improved debug handling and output
+
+
+Version 0.63.1 - 2002-12-30
+	This is a maintenance release.
+	- Updated the exit (error) code.
+	- Consolidated the exit error code values, they are now determined
+	  by variables, making the exit values more consistent.  The exit
+	  values have actually changed, compared to the previous versions.
+	- Removed unused code.
+	- Added better debug output.
+	- Variables are checked more strictly (the characters *, / and & are
+	  not allowed anylonger).
+	- Moved code that was written multiple times into a function.
+
+	
+Version 0.63 - 2002-12-21
+	This is a maintenance release.
+	- Replaced freely used directories names into variables, making the
+	  code better understandable and ready for future enhancements.
+	- Removed cache conversion code.
+	- Improved the lock mechanism.
+	- Improved crash handling.
+	- Fixed srpm linkage if the repository structure changes from
+	  flat to noflat or vice versa.
+	- It's now required to use the new argument --force to alter the
+	  repository structure.
+
+
+Version 0.62 - 2002-12-15
+	We kept our promise and made sure that the warning issued with the
+	previous release wasn't there for nothing.  With this release of
+	aptate, almost anything that is visible from the outside of aptate
+	has been changed.  The changes have been made to obtain full XML
+	support in the configuration file.  Which has enabled us to combine
+	the seperate config - and mirror files into 1 configuration file.
+	The only thing that did not change is the structure of the apt
+	repository, and that is what it is all about.
+
+	A summary of the changes is listed below:
+	- The config files have been integrated into 1 file.
+	- The new config file is defined by a dtd.  This enforces that
+	  the configuration is correct XML.  Which allows for checking the
+	  correctness of the file.
+	- Distributions are now recognized by a distribution id, instead of the
+	  name/version/arch combination.
+	- Many, if not all, tags in the configuration file have been renamed or
+	  have moved.  Some of the elements have been converted into an
+	  attribute.  A script (aptate-convert) is available to convert the
+	  existing config - and mirrorfiles to the new format.  Most of the
+	  conversion will be performed by the script, but your manual
+	  intervention is still required.  For example to provide a
+	  distribution id('s) (which is new with this release).
+	- Removed many command line arguments.  The functionality is still
+	  there but it can now only be configured via the configuration file.
+	- Support for apt-0.5.4 has been added, aptate now supports apt-0.3.19
+	  and apt-0.5.4
+	- Improved the cache code made it more robust.
+	- The cache creation has been speed up, by combining multiple rpm
+	  queries.
+	- The cache holds its information more fine grained.  As a side effect
+	  it's now very easy to search for information about a certain
+	  package.
+	- The fine grained cache structure enabled the creation of an apt
+	  repository contents file (contlist.bz2).  And it is now possible to
+	  obtain a list with the most recent rpm (mrlist.<component>.bz2) for
+	  an apt component (which may come in handy for automated install
+	  applications like kickstart, autoyast, etc).
+	- Aptate now really deals with patch rpms (prpm), they are provided
+	  in their own apt component.
+	- Bad rpms can now be ignored or renamed.
+	- Aptate learned the difference between nosrc.rpms and src.rpms.
+	- By default aptate processes all known repositories (distribution id's).
+	- A command line option has been added to rebuild a cache(s).
+	- A command line option has been added to rebuild apt component links.
+	- The cache -, log and update directory have been moved to another
+	  location:
+	  update: <topdir>/apt/share/<distid>/update
+	  cache:  <topdir>/apt/share/<distid>/cache
+	  log:    <topdir>/apt/share/<distid>/log
+	- Aptate can be configured to run external download scripts.
+	- Accept and reject rpms rules based on rpm name (including path) have
+	  been introduced.
+	- Code has been updated to work correctly with perl-5.8
+	- Added a manual describing the configuration file variables.
+	- Added apt client example scripts.
+	- integrated the functionality of the script genbasedir into aptate.
+	- Fixed the determination of the md5/gpg rpm characteristics
+	- Code cleanup.
+
+Version 0.50 - 2002-06-12
+	A lot has changed since the previous 0.20 version.  Under the hood
+	apt4rpm obtained autoconf/configure support from Ralf Corsepius.
+	Aptate is more robust and has been given its own man page too :)
+
+	Very visible is the new and default "flat" repository mode.
+	This means that the source rpms (SRPMS) are being stored at the same
+	level as the binary rpms.  The big advantage is that source rpms of
+	different distribution versions are not mixed any longer.  The first
+	time you run the new aptate version, a message will be reported that the
+	existing apt repository is being changed from "noflat" to "flat".  This
+	is okay, there won't we such messages for the subsequent aptate runs.
+	
+	All changes are being listed below.
+
+	WARNING:
+	For the next version of aptate we expect a big incompatible change in 
+	the layout of the configuration files.  We hope that the 2 or more 
+	config files that aptate now requires will be integrated into 1 big 
+	unified xml formatted config file.
+	So don't tell us with the next release, that you did not expect the
+	API to be changed!
+	
+	* server/aptate:
+	  - Add flat repository support.
+	  - Added support for switching from flat to noflat apt repositories
+            and vice versa
+            NOTE: the flat repository is now the default APT repository.
+	    This used to be "noflat"
+	  - The release.* files are now always refreshed and reflect when
+	    aptate has run (or when the apt repository has been created)
+	  - Remove -H, --Help. let --help print long help to stdout.
+	  - Fixed problem with signed repositories
+	  - Corrected a bug, if an rpm disappeared from the rpm repository an
+	    error was reported by "mv"
+	  - Added progress markers
+	  - Improved the cache audit
+	  - Code cleanup.
+	* Autoconf/automake support, adaptation to GNU standards.
+	* New apt4rpm.spec it is now dependend on perl-XML-Simple
+	* server/aptate.pl: Several minor cleanups.
+	* New config/aptate.conf.dtd, config/mirrorlist.dtd.
+	* Rename config/aptate.conf to config/aptate.conf.xml.
+	* Remove misc/apt-cvs.spec and misc/apt4rpm.spec (Obsolete).
+	* Reworked changelog and renamed to NEWS.
+	* Add manpage for aptate (aptate.8).
+
+Version 0.20 - 2002-05-19
+	* Bad rpms are now marked as bad rpms
+	* Introduced an additional output stream, dividing the
+          progress marker's stream (3) into 2 stream (being 3
+          and 4).  Output stream 4 contains now the ANSI chars and
+          output stream 3 provides clean status information
+	* Added a cache consistency check.  The check will remove
+          cache entries that contain not existing directories
+	* Make the "old" left behind (test) APT repository 
+          unreadable for group and others
+	* Exit aptate and provide an error report, in case
+          genbasedir does not finish succesfully
+	* Do not change the apt component information in
+          in rpm repository has not changed.  This has
+          advantages for the server as well as the client.
+          Especially the client will be happy as it prevents
+          unnecessary downloads.  The latter is appreciated by
+          the server (bandwidth savings) as well of course.
+          The apt server will need to do less processing 
+          as well :))  As the apt repository component information
+          will be kept and regenerated.
+	* Beautified the output during the mirror and link action
+
+Version 0.1.4 - 2002-05-09
+	* fix a problem introduced by SuSE, as SuSE is now releasing patch rpms.
+	  These have different dependencies compared to the "real" rpms.
+	* Separated download and linking action.  First all downloading is 
+	  done, and after that the linking is performed.
+
+Version 0.1.3 - 2002-04-23
+	* fix a problem when only 1 dir is being specified as exclude
+	  directory.
+
+Version 0.1.2 - 2002-04-20 
+	* Removed references to aptatemod in error messages as aptatemod is in
+	  a bad shape.
+	* Fix incorrect aptate.pl parsing when only 1 component is configured
+	  in the mirrorlistfile.
+	* Fix inconsistent argument signed_pkgs_only into signed-pkgs-only.
+	* Fix incorrect file and http example sources.list files.
+
+Version 0.1.1 - 2002-03-10 
+	* Fix <cutdirs>0</cutdirs> in the mirrorfile.
+	* Added Nvidia example to the mirrorfile.

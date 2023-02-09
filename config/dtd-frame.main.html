@@ -1,0 +1,1625 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
+<html xmlns='http://www.w3.org/1999/xhtml'>
+
+  <head>
+    <meta http-equiv='Content-Type' content='text/html; charset=ISO-8859-1' />
+    <meta name='generator' content='dtd2html 0.41 (Perl 5.008005)' />
+    
+    <title>aptate configuration manual (Main)</title>
+    
+    <link href='style.css' rel='stylesheet' type='text/css'/>
+    
+  </head>
+
+  <body>
+    <h1>aptate configuration manual</h1>
+    <hr />
+      <h3>Prolog</h3>
+    <p>
+  
+      &lt;<span class='keyword1'>!DOCTYPE</span> <a href='#elt_opt'>opt</a>
+    
+      
+      <span class='keyword1'>SYSTEM</span> 'aptate.dtd'
+      
+    
+&gt;
+  
+    </p>
+
+    
+    
+
+    <hr />
+    <ul>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_opt' name='elt_opt'/>
+        <strong>opt</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> opt ( <a href='dtd-frame.main.html#elt_topdir'>topdir</a> ) &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt bad-rpm-mode
+          
+            ( report-only | rename )
+          
+          
+          
+            "report-only"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt bloat
+          
+            ( yes | no )
+          
+          
+          
+            "yes"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt flat
+          
+            ( yes | no )
+          
+          
+          
+            "yes"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt follow
+          
+            ( yes | no )
+          
+          
+          
+            "no"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt old-hashfile
+          
+            ( yes | no )
+          
+          
+          
+            "yes"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt patch-rpm-component
+          
+            ( yes | no )
+          
+          
+          
+            "yes"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt patch-rpm-string
+          
+            ( prpm | patchrpm )
+          
+          
+          
+            "prpm"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt security-component
+          
+            ( yes | no )
+          
+          
+          
+            "no"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt signed-pkgs-only
+          
+            ( yes | no )
+          
+          
+          
+            "no"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt sign-repository
+          
+            ( yes | no )
+          
+          
+          
+            "no"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt update-rpms
+          
+            ( yes | no )
+          
+          
+          
+            "no"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt verbose
+          
+            ( 0 | 1 | 2 | 3 | 4 )
+          
+          
+          
+            "3"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt wget-tries
+          
+            <span class='keyword1'>NMTOKEN</span>
+          
+          
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> opt wget-wait
+          
+            <span class='keyword1'>NMTOKEN</span>
+          
+          
+          
+          &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> root element "options".  
+<br /></p>
+      
+      <p class='comment'><p>An explanation of the attributes belonging to the element "opt".
+</p
+
+<p>
+ <table class='synopsis' border='1' cellspacing='0' cellpadding='4'>
+  <thead>
+   <th>variable</th>
+   <th>explanation</th>
+   <th>cla</th>
+  </thead>
+  <tr>
+   <td valign=top>bad-rpm-mode</td>
+   <td>The action to be performed on a bad rpm.  A bad rpm is an rpm that
+    fails the command "rpm -q".  There are 2 treatments; report-only 
+    and rename.
+    <ul>
+     <li>in <b>report-only</b> mode aptate, as it says, will inform you only.
+      So manual action is required, to get the problem resolved to prevent
+      the warning being reported over and over again.
+     </li>
+     <li>in <b>rename</b> mode aptate will move the bad rpm away.  This
+      prevents that the problem is reported over and over again.  However,
+      if the problem persist, because the rpm is rsync-ed over and over again
+      it may be that the rpm provided by your rpm source is corrupt.  The only
+      way to solve this problem is at the source: contact the rpm provider.
+     </li>
+    </ul>
+    <p>In both cases the rpm will be excluded from the apt repository.
+    </p>
+   </td>
+   <td align=center valign=top>yes</td>
+  </tr>
+  <tr>
+   <td valign=top>bloat</td>
+   <td>Provide apt databases with extensive information.  It's adviced to
+    activate this on rpm systems.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>flat</td>
+   <td>The location of source rpm components.  In a flat repository (flat=yes)
+    the source rpms are located at the same level as the binary rpms.  In non
+    flat (flat=no) repositories the source rpms are stored 1 directory higher
+    than the binary rpms.
+    <br><br>
+    Aptate has been optimized for flat repositories.  Aptate has no problems
+    creating a non flat apt repository that holds only 1 archive.  The result
+    in case the non flat repository holds more than 1 archive depends on the
+    way the source rpms are organized in the rpm (not apt) repository.
+    The result may be good may be bad.
+    <br><br>
+    Anyway, a flat repository seems the right choice for most rpm based
+    distributions.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>follow</td>
+   <td>Follow symlinks when searching rpms in the rpm repository.  This is a
+    dangerous option as the links can lead outside the apt or rpm repository.
+    The apt repository maintainer must ensure this will not happen and must
+    ensure that no endless loops exist in the rpm repository if directories or
+    files are symlinked.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>old-hashfile</td>
+   <td>Provide the apt-rpm version 0.3.19 hashfile for backwards compatibility.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>patch-rpm-component</td>
+   <td>If yes, aptate will look for patch rpms and if found will make a
+    seperate apt component holding patch rpms only, next to the component
+    being processed.  Doing so gives the possibility to assign patch
+    rpms a higher priority than regular binary rpms or to exclude them.  The
+    component gets the name of the component being processed suffixed with
+    a "patch-rpm-string".  The latter is explained as a seperate item.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>patch-rpm-string</td>
+   <td>The suffix that will be added to the component name in case
+    the component provides patch rpms.  It is a matter of taste:
+    <i>patchrpms</i> says more than <i>prpm</i>, but hopefully prpms will be
+    as common as srpms...  So, the component for patch rpms will be either
+    called RPMS.&lt;component name>-prpm, or RPMS.&lt;component name>-patchrpm.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>security-component</td>
+   <td>If yes, aptate makes an apt repository component providing rpms
+    that have been released to solve security problems only.
+    There are many reasons why it's good to have an apt component providing
+    only security related rpms.  This can be because the user is behind a
+    slow connection, wants to maintain to stable system, etc.
+    <br>
+    This functionality works now only for SuSE, however it is possible to
+    extend aptate's functionality to get other distributions supported.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>signed-pkgs-only</td>
+   <td>If yes, aptate will only import rpms into the apt repository, that
+    pass the rpm (gpg) signature check.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>sign-repository</td>
+   <td>If yes, aptate will sign the aptate repository with the name specified
+    in the authorization element.  This is usefull in case the apt repository
+    is mirrored and you want to prevent others to sneak in incorrect rpms
+    into your mirrored repository.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>update-rpms</td>
+   <td>If activated new rpm packages will be downloaded from the download
+    server(s) as specified in the component parts of the configuration file.
+   </td>
+   <td align=center valign=top>yes</td>
+  </tr>
+  <tr>
+   <td valign=top>verbose</td>
+   <td>The verboseness of aptate.
+    <ul>
+     <li>0: no output (but a few error messages)
+     </li>
+     <li>1: all error messages
+     </li>
+     <li>2: idem 1, plus progress messages
+     </li>
+     <li>3: idem 2, plus progress counters
+     </li>
+     <li>4: idem 3, plus which config file is being read
+     </li>
+     <li>5: display all messages (debug mode)
+     </li>
+     <li>6: idem 5, but temporarely directories and files are not being removed
+     </li>
+    </ul>
+   </td>
+   <td align=center valign=top>yes</td>
+  </tr>
+  <tr>
+   <td valign=top>wget-tries</td>
+   <td>This is a wget option.  The wget man states:<br>
+    Set number of retries to number.  Specify 0 for infinite retrying.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>wget-wait</td>
+   <td>This is a wget option.  The wget man states:<br>
+    Wait the specified number of seconds between the retrievals.  Use of this
+    option is recommended, as it lightens the server load by making the
+    requests less frequent.  More about the wget wait option in the wget
+    manual.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+ <table>
+ <p><small>cla: command line argument</small></p>
+</p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_distribution' name='elt_distribution'/>
+        <strong>distribution</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> distribution ( ( <a href='dtd-frame.main.html#elt_name'>name</a> ) ) &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> distribution id
+          
+            <span class='keyword1'>ID</span>
+          
+          
+            <span class='keyword2'>#REQUIRED</span>
+          
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> distribution security-component
+          
+            ( yes | no )
+          
+          
+            <span class='keyword2'>#IMPLIED</span>
+          
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> distribution patch-rpm-component
+          
+            ( yes | no )
+          
+          
+            <span class='keyword2'>#IMPLIED</span>
+          
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> distribution process
+          
+            ( yes | no )
+          
+          
+          
+            "yes"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> distribution structure
+          
+            ( 1 | 2 | 3 | 4 )
+          
+          
+          
+            "1"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> distribution yum
+          
+            ( yes | no )
+          
+          
+          
+            "no"
+          
+          &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Holds all information belonging to 1 distribution.  
+<br /></p>
+      
+      <p class='comment'><p>An explanation of the attributes belonging to the element distribution.
+</p>
+<p>
+ <table class='synopsis' border='1' cellspacing='0' cellpadding='4'>
+  <thead>
+   <th>variable</th>
+   <th>explanation</th>
+   <th>cla</th>
+  </thead>
+  <tr>
+   <td valign=top>id</td>
+   <td>The unique name of this distribution.  This name will be used to select
+    the distribution on the command line, so make it an easy one to remember.
+   </td>
+   <td align=center valign=top>yes</td>
+  </tr>
+  <tr>
+   <td valign=top>patch-rpm-component</td>
+   <td>This is the same option as the <i>patch-rpm-patch</i> option in the
+    &lt;opt&gt; element.  The main
+    difference is that the <i>patch-rpm-component</i> option here operates at
+    distribution level. It overwrites the global value that is specified by
+    the <i>patch-rpm-patch</i> argument in the &lt;opt> element.
+    If the <i>patch-rpm-patch</i> argument is not defined here at distribution
+    level the value specified in the &lt;opt> element is used.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign="top">process</td>
+   <td>With this attribute processing of an archive (which is actually a
+    combination of distribution, version and architecture) can be activated or
+    de-activated without the need to remove the configuration data from the
+    configuration file.  This may be usefull for archives that e.g. have no
+    update activaty or in case the vendor discontinued the distribution.  When
+    processing is de-activated (process="no") the actual apt archive remains to
+    exist, but it will not be updated.  If a update is needed the command line
+    argument --dist-id &lt;distribution id> can be used to update the apt
+    repository manually. 
+   </td>
+   <td align="center" valign="top">yes</td>
+  </tr>
+  <tr>
+   <td valign=top>security-component</td>
+   <td>This is the same option as the <i>security-component</i> option in the
+    &lt;opt&gt; element.  The main
+    difference is that the <i>security-component</i> option here operates at
+    distribution level. It overwrites the global value that is specified by
+    the <i>security-component</i> argument in the &lt;opt> element.
+    If the <i>security-component</i> argument is not defined here at distribution
+    level the value specified in the &lt;opt> element is used.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>structure</td>
+   <td>With this element the structure of the apt archive can be set.<br>
+    The following structure types are available:
+    <ol>
+     <li>dist/version-architecture
+     </li>
+     <li>dist/version/architecture
+     </li>
+     <li>dist/version/language/architecture
+     </li>
+     <li>User specified, via the element (tag) &lt;archive>
+     </li>
+    </ol>
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>yum</td>
+   <td>Add a yum repository to the distribution.
+   The yum repository will be created in $topdir/$repdir/yum,
+   neighboring to apt's "base" directory.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+ <table>
+</p>
+<p><small>cla: command line argument</small></p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_version' name='elt_version'/>
+        <strong>version</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> version ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define the version of the distribution.  
+<br /></p>
+      
+      <p class='comment'> The following characters are allowed: alphanumeric -_./ 
+<br /></p>
+      
+      <p class='comment'> Examples are: 2.2, 7.3, 8.1, etc.  
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_architecture' name='elt_architecture'/>
+        <strong>architecture</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> architecture ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define the architecture of the distribution.  
+<br /></p>
+      
+      <p class='comment'> The following characters are allowed: alphanumeric -_./ 
+<br /></p>
+      
+      <p class='comment'> Examples are: i386, i586, ppc, etc.  
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_language' name='elt_language'/>
+        <strong>language</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> language ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define the language of the distribution.  
+<br /></p>
+      
+      <p class='comment'><p>The distribution atttribute structure must be set to "3" to make 
+ this element active.<br>
+ <br>
+ The following characters are allowed: alphanumeric -_./
+</p>
+<p>Examples are: en, ja, etc.
+</p>
+
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_archive' name='elt_archive'/>
+        <strong>archive</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> archive ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define user specified archive of the distribution.  
+<br /></p>
+      
+      <p class='comment'><p>This element can be used to configure a user specified archive.
+ It's value must be a valid directory name, relative to the repository
+ directory (&lt;topdir>/apt).
+ In case the directory does not exist it will be created by aptate.
+ This element should be used in case the archive types provided by aptate
+ does not match the naming convention that is required by the user.<br>
+ <br>
+ The distribution atttribute structure must be set to "4" to make this
+ element active.
+ <br>
+ The archive must consist of at least 2 directories.
+ <br>
+ The following characters are allowed: alphanumeric -_./
+</p>
+
+<p>Examples are: bike/1.1, okna/2003-i386/us, etc.
+</p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_topdir' name='elt_topdir'/>
+        <strong>topdir</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> topdir ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define the top directory.  
+<br /></p>
+      
+      <p class='comment'><p>Aptate's top (or root) directory determines, where the apt repository(ies)
+ will reside.  All other directories are relative to this directory.
+ A directory called apt will be created by aptate under this directory.
+ The <i>apt</i> directory holds the apt repositories and directories
+ that are used by aptate internally (see the description of the element
+ &lt;sharedir>).<br>
+</p>
+<p>The following characters are allowed: alphanumeric -_./
+</p>
+<p>Examples are: /dist, /distribution/okna2001, etc.
+</p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_sharedir' name='elt_sharedir'/>
+        <strong>sharedir</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> sharedir ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define the shared directory.  
+<br /></p>
+      
+      <p class='comment'><p>The sharedir tag defines the location of the shared directory.  In this
+ directory several other directories are stored that are used by aptate
+ internally.  The sharedir defaults to &lt;topdir>/apt/share and in most, if
+ not in all cases this is the right value to use.  It is possible to specify
+ an absolute path.
+</p>
+<p>Information that is stored in this directory are caches, the rpms
+ that are mirrored from download servers and the download log files.  The
+ directories are organized by distribution id.
+</p>
+<p>The following characters are allowed: alphanumeric -_./
+</p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_repdir' name='elt_repdir'/>
+        <strong>repdir</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> repdir ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define the repository directory.  
+<br /></p>
+      
+      <p class='comment'><p>The repdir tag defines the location of the apt subdirectory below $topdir.
+ $topdir/$repdir is the directory aptate will put its files into.
+ Default: apt.
+</p>
+<p>
+ Setting repdir to an empty string will cause aptate to put its files into
+ $topdir directly.
+</p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_authorization' name='elt_authorization'/>
+        <strong>authorization</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> authorization ( <a href='dtd-frame.main.html#elt_name'>name</a> ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Holds all authorization information.  
+<br /></p>
+      
+      <p class='comment'><p>The element authorization holds information to be used to sign the apt
+ repository.  If the apt repository is not going to be signed this element is
+ not needed.
+</p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_name' name='elt_name'/>
+        <strong>name</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> name ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define a name.  
+<br /></p>
+      
+      <p class='comment'><p>The following characters are allowed: alphanumeric -_./
+</p>
+<p>Examples are:<br>
+ &nbsp; inside the distribution element: Caldera, Mandrake, Okna98,
+ SuSE, etc.<br>
+ &nbsp; inside the component element: kde, gnome, stable, test, base,
+ etc.<br>
+ &nbsp; inside the authorization element: Joe User, etc.
+</p>
+<p>The name to be used inside the authorization element will be used to
+ sign the apt repository.
+</p>
+
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_email' name='elt_email'/>
+        <strong>email</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> email ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define an email address 
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_sources-list-file' name='elt_sources-list-file'/>
+        <strong>sources-list-file</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> sources-list-file ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Provide an example sources.list file &#x0075;rl 
+<br /></p>
+      
+      <p class='comment'><p>The information provided by this element is used to create an
+ example /etc/apt/sources.list file for the file protocol.  The information
+ is the url that describes how your apt repository users can reach your
+ repository via the file protocol.  An example of such a url is:
+ <i>/dist/okna98/apt</i> (it's no problem if the protocol is included in the
+ url).
+</p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_sources-list-ftp' name='elt_sources-list-ftp'/>
+        <strong>sources-list-ftp</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> sources-list-ftp ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Provide an example sources.list ftp &#x0075;rl 
+<br /></p>
+      
+      <p class='comment'><p>The information provided by this element is used to create an
+ example /etc/apt/sources.list file for the ftp protocol.  The information
+ is the url that describes how your apt repository users can reach your
+ repository via the ftp protocol.  An example of such a url is:
+ <i>ftp.okna98.rm/apt</i> (it's no problem if the protocol is included in the
+ url).
+</p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_sources-list-http' name='elt_sources-list-http'/>
+        <strong>sources-list-http</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> sources-list-http ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Provide an example sources.list http &#x0075;rl 
+<br /></p>
+      
+      <p class='comment'><p>The information provided by this element is used to create an
+ example /etc/apt/sources.list file for the http protocol.  The information
+ is the url that describes how your apt repository users can reach your
+ repository via the http protocol.  An example of such a url is:
+ <i>www.okna98.rm/apt</i> (it's no problem if the protocol is included in the
+ url).
+</p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_component' name='elt_component'/>
+        <strong>component</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> component ( <a href='dtd-frame.main.html#elt_name'>name</a> ) &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> component active
+          
+            ( yes | no )
+          
+          
+          
+            "yes"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> component list-most-recent
+          
+            ( yes | no )
+          
+          
+          
+            "no"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> component update-rpms
+          
+            ( yes | no )
+          
+          
+          
+            "yes"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> component scan
+          
+            ( yes | no )
+          
+          
+          
+            "yes"
+          
+          &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Holds all information belonging to 1 component 
+<br /></p>
+      
+      <p class='comment'><p>Attribute explanation:</p>
+<p>
+ <table class='synopsis' border='1' cellspacing='0' cellpadding='4'>
+  <thead>
+   <th>variable</th>
+   <th>explanation</th>
+   <th>cla</th>
+  </thead>
+  <tr>
+   <td valign=top>active</td>
+   <td>This attribute determines if a component is to be used or discarded.
+    With this switch it is possible to de-activate the processing of this
+    component, without removing the data from the configuration file.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>list-most-recent</td>
+   <td>If set to yes a list with the most recent rpms provided by the
+     component is being created.  This can be usefull for automatic
+     installation programs, like e.g. autoyast.  The list is called
+     <b>contlist.&lt;component name>.bz2</b> and is stored in the
+     directory "base" of the apt repository
+   </td>
+   <td align=center valign=top>yes</td>
+  </tr>
+  <tr>
+   <td valign=top>scan</td>
+   <td>Activate or de-activate scanning of the rpm directory.  De-activating
+    scanning of an rpm directory might be usefull for rpm directories that
+    won't change anymore, are stored on removable media, such as cd, dvd,
+    usb sticks, etc.  Scanning can be manually activated from the command line
+    with the argument --scan.
+   </td>
+   <td align=center valign=top>yes</td>
+  </tr>
+  <tr>
+   <td valign=top>update-rpms</td>
+   <td>Activate or de-activate downloading of rpms from the download server
+    for this specific component.
+   </td>
+   <td align=center valign=top>yes *1</td>
+  </tr>
+ <table>
+</p>
+<p><small>cla: command line argument<br>
+ *1: global, not for 1 component in particular</small>
+</p>
+
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_url' name='elt_url'/>
+        <strong>url</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> url ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> url method
+          
+            ( file | ftp )
+          
+          
+          
+            "file"
+          
+          &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define a url. 
+<br /></p>
+      
+      <p class='comment'><p>Specify the url where the rpms are located that must be imported
+ into the apt repository.  The format of url is without specifying the
+ protocol.  The protocol is specified with the attribute "method".<br>
+</p>
+
+<p>Attribute explanation:</p>
+<table class='synopsis' border='1' cellspacing='0' cellpadding='4'>
+ <thead>
+  <th>variable</th>
+  <th>explanation</th>
+  <th>cla</th>
+ </thead>
+ <tr>
+  <td valign=top>method</td>
+  <td>The method to retrieve the url.
+  </td>
+  <td align=center valign=top>no</td>
+ </tr>
+<table>
+<p><small>cla: command line argument</small></p>
+
+<p>Examples are:<br>
+ &nbsp;&lt;url method="file">extra&lt;/url> (this is relative to topdir)<br>
+ &nbsp;&lt;url method="file">update/myrpms&lt;/url><br>
+ &nbsp;&lt;url method="file">../etc&lt;/url><br>
+ &nbsp;&lt;url method="ftp">ftp.downloadserver.uu/pub/linux/my/distro&lt;/url>
+</p>
+<p>The protocol specifiers: "file:///" and the "ftp://" are not specified
+ inside the tag.  These are specified by the attribute "method."
+</p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_accept' name='elt_accept'/>
+        <strong>accept</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> accept ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define a rule to include certain rpms only 
+<br /></p>
+      
+      <p class='comment'><p>The accept tag is used to filter rpms on their full name (including path)
+ into the apt repository.  This can be used to select rpms from an rpm
+ repository without a structure.  For example a rpm repository that has been
+ devided mainly by people who have their rpms devided by version.
+ The filter has been constructed with <i>grep -E</i>.  The regular expressions
+ that apply for grep can be used here as well.
+</p>
+<p>In case one would like to accept rpms for release 9.0 and the ppc
+ architecture one can make the following rule:<br>
+ &lt;accept>9.0.*ppc&lt;/accept>.  Which will actually result in
+ <i>grep -E "9.0.*ppc"</i><br>
+ A similar result can be obtained by using 2 accept tags:<br>
+ &lt;accept>9.0&lt;/accept> and<br>
+ &lt;accept>ppc&lt;/accept><br>
+ This will result in
+ <i>grep -E "9.0|ppc"</i>.<br>
+</p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_reject' name='elt_reject'/>
+        <strong>reject</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> reject ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define a rule to exclude certain rpms 
+<br /></p>
+      
+      <p class='comment'><p>The reject tag is used to filter rpms on their full name (including path)
+ to exclude them from the apt repository.  
+ The filter has been constructed with <i>grep -vE</i>.  The regular expressions
+ that apply for grep can be used here as well.
+</p>
+<p>In case one would like to reject rpms of the i686 architecture and release
+ 2.2 one can make the following rule:<br>
+ &lt;reject>2.2.*i686&lt;/reject>.  Which will actually result in
+ <i>grep -vE "2.2.*i686"</i><br>
+ A similar result can be obtained by using 2 reject tags:<br>
+ &lt;reject>2.2&lt;/reject> and<br>
+ &lt;reject>i686&lt;/reject><br>
+ This will result in
+ <i>grep -vE "2.2|i686"</i>.<br>
+</p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_wget' name='elt_wget'/>
+        <strong>wget</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> wget ( <a href='dtd-frame.main.html#elt_excludedir'>excludedir</a> ) &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> wget continue
+          
+            ( yes | no )
+          
+          
+          
+            "yes"
+          
+          &gt;
+        
+          <br />
+          &lt;<span class='keyword1'>!ATTLIST</span> wget cutdirs
+          
+            ( 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 )
+          
+          
+          
+          &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Holds all information for the mirror application wget.  
+<br /></p>
+      
+      <p class='comment'><p>Attribute explanation:</p>
+<p>
+ <table class='synopsis' border='1' cellspacing='0' cellpadding='4'>
+  <thead>
+   <th>variable</th>
+   <th>explanation</th>
+   <th>cla</th>
+  </thead>
+  <tr>
+   <td valign=top>continue</td>
+   <td>This is a wget option.
+    The <a href=man:wget target=_blank>wget manual</a> states:<br>
+    continue getting a partially-downloaded file.  This is useful when you
+    want to finish up a download started by a previous instance of wget, or by
+    another program.  More about the wget continue option in the wget manual.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>cutdirs</td>
+   <td>This is a wget option.
+    The <a href=man:wget target=_blank>wget manual</a> states:<br>
+    Ignore number directory components.  This is useful for getting a
+    fine-grained control over the directory where recursive retrieval will be
+    saved.  More about the wget cut-dirs option in the wget manual.<br>
+    <br>
+    The rpms being downloaded are stored under the
+    &lt;sharedir>/&lt;dist-id>/update/ plus the directory obtained
+    from the cutdirs action.<br>
+    <br>
+    Important to note; in case this option is used (cutdirs > 0) the wget
+    option -no-host-directories is used by aptate too.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+ <table>
+</p>
+<p><small>cla: command line argument</small></p>
+
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_script' name='elt_script'/>
+        <strong>script</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> script ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Specifies a script to download packages 
+<br /></p>
+      
+      <p class='comment'><p>The script can be wrapper around rsyncs, cp's or wget calls.  The script
+ is triggered by the --update-rpms argument of aptate.  The rpms that are
+ retrieved by the script must be stored at the location that is specified in
+ the &lt;url> tag.
+</p>
+<p>The script is given 2 arguments, the 1st argument is the
+ &lt;topdir&gt; and the 2nd one is
+ the location where the rpms must be stored.  Find below an example of a
+ possible download script.
+</p>
+
+<hr>
+<pre>
+# !/bin/sh
+
+while test $# -gt 0; do
+case $1 in
+--redhat )
+site=ftp://updates.redhat.com
+prefix=
+cutdirs=0
+  shift
+  break
+  ;;
+--* )
+  echo "Invalid option $1"
+  exit 1
+  ;;
+## More sites can be added here
+* )
+  break
+  ;;
+esac
+done
+if test $# -ne 2; then
+  echo "Invalid number of arguments: $#"
+  exit 1
+fi
+
+topdir=$1
+urldir=$2
+
+dst=${topdir}/mirrors/ftp.redhat.com/pub/updates
+src=/8.0/en/os
+
+if test -z "$site"; then
+   echo "Missing site"
+   exit 1
+fi
+
+if test "$d" != "0" ; then
+   # don't d/l certain files based on today's weekday
+   excludes="$excludes -X ${prefix}${src}/athlon"
+fi
+
+wget -r --cut-dirs=$cutdirs -m -nH -c --passive-ftp \
+$excludes -P ${dst} ${site}${prefix}${src}
+</pre>
+<hr>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_excludedir' name='elt_excludedir'/>
+        <strong>excludedir</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> excludedir ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define directories to excluded from download 
+<br /></p>
+      
+      <p class='comment'><p>This is a wget option (-X) and specifies which directories of the
+ download server should not be retrieved.  The directories may contain
+ wildcards.  The directory should be the full path, starting just right after
+ the hostname up to and including the directory to be excluded.
+</p>
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+      <li>
+      
+      
+      
+      
+        <a id='elt_add-arg' name='elt_add-arg'/>
+        <strong>add-arg</strong>
+        <p>&lt;<span class='keyword1'>!ELEMENT</span> add-arg ( <span class='keyword1'>#PCDATA</span>  ) &gt;
+        
+        </p>
+      
+
+      
+      <p class='comment'> Define additional wget arguments 
+<br /></p>
+      
+      <p class='comment'><p>This tag can be used to specify any wget option.  These options
+ are transparently handed over to wget.  For more information about
+ the options available, see the
+ <a href=man:wget target=_blank>wget manual</a>.
+</p>
+<p>Example:<br>
+ -reject *-devel-* -proxy=off
+</p>
+
+<br /></p>
+      
+      
+      
+
+      </li>
+    
+    </ul>
+  
+    <hr />
+    
+    <a id='ex_aptate.xml' name='ex_aptate.xml'/>
+    <h3>Example aptate.xml :</h3>
+    <pre>&lt;?xml version=&apos;1.0&apos; encoding=&quot;iso-8859-1&quot;?&gt;
+&lt;!DOCTYPE opt SYSTEM &quot;aptate.dtd&quot;&gt;
+
+<em>&lt;!--
+   This is an example aptate configuration file.  It shows most of aptate&apos;s
+   elements and element attributes.  A nice way to create this file is by
+   using xemacs in pgsml mode.  Xemacs in this mode will be of great help,
+   as it gives you a gui to make this configuration file.  Make sure though
+   that the filename ends at &quot;.xml&quot;!
+
+   All possibilities are described in the manual, that can be found at:
+   file:///usr/share/doc/packages/apt4rpm/dtd-manual/dtd-manual.book.home.html
+--&gt;</em>
+
+&lt;<a href='dtd-frame.main.html#elt_opt'>opt</a>
+  security-component=&quot;yes&quot;
+  update-rpms=&apos;yes&apos;
+&gt;
+
+  <em>&lt;!-- all files are relative to this path --&gt;</em>
+  &lt;<a href='dtd-frame.main.html#elt_topdir'>topdir</a>&gt;/dist/okna2002&lt;/topdir&gt;
+
+  <em>&lt;!-- Information used to sign the apt repository --&gt;</em>
+  &lt;<a href='dtd-frame.main.html#elt_authorization'>authorization</a>&gt;
+    &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;joe&lt;/name&gt;
+    &lt;<a href='dtd-frame.main.html#elt_email'>email</a>&gt;joe@users.sourceforge.net&lt;/email&gt;
+  &lt;/authorization&gt;
+
+  <em>&lt;!-- It&apos;s not required to specify the protocol --&gt;</em>
+  &lt;<a href='dtd-frame.main.html#elt_sources-list-file'>sources-list-file</a>&gt;/dist/okna2002/apt&lt;/sources-list-file&gt;
+  &lt;<a href='dtd-frame.main.html#elt_sources-list-ftp'>sources-list-ftp</a>&gt;/gw/suse/suse-8.1/apt/&lt;/sources-list-ftp&gt;
+  &lt;<a href='dtd-frame.main.html#elt_sources-list-http'>sources-list-http</a>&gt;http://www.okna.rm/apt&lt;/sources-list-http&gt;
+
+  &lt;<a href='dtd-frame.main.html#elt_distribution'>distribution</a> id=&quot;man90&quot;&gt;
+    &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;Mandrake&lt;/name&gt;
+    &lt;<a href='dtd-frame.main.html#elt_version'>version</a>&gt;9.0&lt;/version&gt;
+    &lt;<a href='dtd-frame.main.html#elt_architecture'>architecture</a>&gt;i386&lt;/architecture&gt;
+
+    &lt;<a href='dtd-frame.main.html#elt_component'>component</a>&gt;
+     &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;extra&lt;/name&gt;
+      &lt;<a href='dtd-frame.main.html#elt_url'>url</a> method=&apos;file&apos;&gt;mandrex&lt;/url&gt;
+    &lt;/component&gt;
+  &lt;/distribution&gt;
+
+  &lt;<a href='dtd-frame.main.html#elt_distribution'>distribution</a> id=&apos;suse73&apos;&gt;
+    &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;SuSE&lt;/name&gt;
+    &lt;<a href='dtd-frame.main.html#elt_version'>version</a>&gt;7.3&lt;/version&gt;
+    &lt;<a href='dtd-frame.main.html#elt_architecture'>architecture</a>&gt;i386&lt;/architecture&gt;
+
+    &lt;<a href='dtd-frame.main.html#elt_component'>component</a>&gt;
+      &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;extra&lt;/name&gt;
+      &lt;<a href='dtd-frame.main.html#elt_url'>url</a> method=&apos;file&apos;&gt;extra&lt;/url&gt;
+      &lt;<a href='dtd-frame.main.html#elt_accept'>accept</a>&gt;i386&lt;/accept&gt;
+      &lt;<a href='dtd-frame.main.html#elt_reject'>reject</a>&gt;src&lt;/reject&gt;
+    &lt;/component&gt;
+
+    &lt;<a href='dtd-frame.main.html#elt_component'>component</a> update-rpms=&quot;yes&quot;&gt;
+      &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;kde&lt;/name&gt;
+      &lt;<a href='dtd-frame.main.html#elt_url'>url</a> method=&apos;ftp&apos;&gt;ftp.gwdg.de/pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/&lt;/url&gt;
+      <em>&lt;!-- remove the hostname and directories: pub/.....supplementary/ --&gt;</em> 
+      &lt;<a href='dtd-frame.main.html#elt_wget'>wget</a> cutdirs=&apos;7&apos;&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/applications&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/development&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/experimental&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/internationalization&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/source&lt;/excludedir&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    <em>&lt;!--
+      The rpms won&apos;t be updated from this server as the attribute update-rpms
+      is missing.  This server can be used as back up server for the before
+      mentioned kde download server (ftp.gwdg.de).
+    --&gt;</em>
+    &lt;<a href='dtd-frame.main.html#elt_component'>component</a>&gt;
+      &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;kde&lt;/name&gt;
+      &lt;<a href='dtd-frame.main.html#elt_url'>url</a> method=&apos;ftp&apos;&gt;ftp.suse.com/pub/suse/i386/supplementary/KDE/update_for_7.3/base&lt;/url&gt;
+      <em>&lt;!-- remove the hostname and directories pub/suse/i386/supplementary --&gt;</em>
+      &lt;<a href='dtd-frame.main.html#elt_wget'>wget</a> continue=&quot;no&quot; cutdirs=&apos;4&apos; /&gt;
+    &lt;/component&gt;
+
+    &lt;<a href='dtd-frame.main.html#elt_component'>component</a> update-rpms=&quot;yes&quot;&gt;
+      &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;update&lt;/name&gt;
+      &lt;<a href='dtd-frame.main.html#elt_url'>url</a> method=&apos;ftp&apos;&gt;ftp.gwdg.de/pub/linux/suse/ftp.suse.com/suse/i386/update/7.3&lt;/url&gt;
+      &lt;<a href='dtd-frame.main.html#elt_wget'>wget</a> cutdirs=&apos;7&apos;&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/beo1&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/doc2&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/emu1&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de1&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de2&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de3&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de9&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.2.19-20011026&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.4.10-20011026&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.4.16-20011220&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/zq1&lt;/excludedir&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;<a href='dtd-frame.main.html#elt_component'>component</a> update-rpms=&quot;yes&quot; list-most-recent=&quot;yes&quot;&gt;
+      &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;ximian&lt;/name&gt;
+      &lt;<a href='dtd-frame.main.html#elt_url'>url</a> method=&apos;ftp&apos;&gt;ftp.ximian.com/pub/ximian-gnome/suse-73-i386&lt;/url&gt;
+      &lt;<a href='dtd-frame.main.html#elt_wget'>wget</a> cutdirs=&apos;1&apos;&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;pub/ximian-gnome/suse-73-i386/source&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_add-arg'>add-arg</a>&gt;--proxy=off --reject *-devel-*&lt;/add-arg&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;<a href='dtd-frame.main.html#elt_component'>component</a> update-rpms=&quot;yes&quot;&gt;
+      &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;mozilla&lt;/name&gt;
+      &lt;<a href='dtd-frame.main.html#elt_url'>url</a> method=&apos;file&apos;&gt;/dist/okna2002/download&lt;/url&gt;
+      <em>&lt;!--
+         Make sure that the script stores the downloaded rpms in the 
+         location that is specified in the url.  The script can be any
+         arbitrary script, taking $topdir as 1st argument and $urldir as 
+         2nd argument (handed over to the script by aptate).  It can be
+         wrapper around wget, rsync, etc.
+      --&gt;</em>
+      &lt;<a href='dtd-frame.main.html#elt_script'>script</a>&gt;/usr/bin/local/mirrorit&lt;/script&gt;
+    &lt;/component&gt;
+
+    &lt;<a href='dtd-frame.main.html#elt_component'>component</a> update-rpms=&quot;yes&quot;&gt;
+      &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;opera&lt;/name&gt;
+      &lt;<a href='dtd-frame.main.html#elt_url'>url</a> method=&apos;ftp&apos;&gt;sunsite.cnlab-switch.ch/mirror/opera/linux/600/&lt;/url&gt;
+      &lt;<a href='dtd-frame.main.html#elt_wget'>wget</a> cutdirs=&apos;1&apos;&gt;
+        &lt;<a href='dtd-frame.main.html#elt_add-arg'>add-arg</a>&gt;--proxy=off --reject *.deb --reject *.bz2 --reject *.gz --reject *shared*&lt;/add-arg&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;mirror/opera/linux/600/tp3&lt;/excludedir&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;<a href='dtd-frame.main.html#elt_component'>component</a> update-rpms=&quot;yes&quot;&gt;
+      &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;nvidia&lt;/name&gt;
+      &lt;<a href='dtd-frame.main.html#elt_url'>url</a> method=&apos;ftp&apos;&gt;ftp://205.158.109.140/XFree86_40&lt;/url&gt;
+      &lt;<a href='dtd-frame.main.html#elt_wget'>wget</a>&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;XFree86_40/0.9-*&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;XFree86_40/1.0-1*&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;XFree86_40/1.0-2313&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_excludedir'>excludedir</a>&gt;XFree86_40/nforce&lt;/excludedir&gt;
+        &lt;<a href='dtd-frame.main.html#elt_add-arg'>add-arg</a>&gt;--accept *suse73*&lt;/add-arg&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+  &lt;/distribution&gt;
+&lt;/opt&gt;
+
+</pre>
+    
+    <a id='ex_aptate.conf' name='ex_aptate.conf'/>
+    <h3>Example aptate.conf :</h3>
+    <pre>&lt;?xml version=&apos;1.0&apos; encoding=&quot;iso-8859-1&quot;?&gt;
+&lt;!DOCTYPE opt SYSTEM &quot;/usr/share/apt4rpm/aptate.dtd&quot;&gt;
+
+&lt;<a href='dtd-frame.main.html#elt_opt'>opt</a>&gt;
+
+ <em>&lt;!-- all files are relative to this path --&gt;</em>
+ &lt;<a href='dtd-frame.main.html#elt_topdir'>topdir</a>&gt;/dist/&lt;/topdir&gt;
+
+ <em>&lt;!-- structure 3 uses the language tag --&gt;</em>
+ &lt;<a href='dtd-frame.main.html#elt_distribution'>distribution</a> id=&quot;redhat80&quot; structure=&quot;3&quot;&gt;
+  &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;redhat&lt;/name&gt;
+  &lt;<a href='dtd-frame.main.html#elt_version'>version</a>&gt;8.0&lt;/version&gt;
+  &lt;<a href='dtd-frame.main.html#elt_architecture'>architecture</a>&gt;i586&lt;/architecture&gt;
+  &lt;<a href='dtd-frame.main.html#elt_language'>language</a>&gt;en&lt;/language&gt;
+
+  &lt;<a href='dtd-frame.main.html#elt_component'>component</a>&gt;
+   &lt;<a href='dtd-frame.main.html#elt_name'>name</a>&gt;base&lt;/name&gt;
+   <em>&lt;!--
+    imagine the full path to be /dist/rh80
+    in combination with a topdir = /dist the
+    url becomes
+   --&gt;</em>
+   &lt;<a href='dtd-frame.main.html#elt_url'>url</a>&gt;../rh80&lt;/url&gt;
+  &lt;/component&gt;
+ &lt;/distribution&gt;
+
+&lt;/opt&gt;
+
+</pre>
+    
+  
+    <hr />
+    <div><cite>Generated by dtd2html</cite></div>
+
+
+  </body>
+
+</html>

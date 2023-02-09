@@ -1,0 +1,49 @@
+<p>Attribute explanation:</p>
+<p>
+ <table class='synopsis' border='1' cellspacing='0' cellpadding='4'>
+  <thead>
+   <th>variable</th>
+   <th>explanation</th>
+   <th>cla</th>
+  </thead>
+  <tr>
+   <td valign=top>active</td>
+   <td>This attribute determines if a component is to be used or discarded.
+    With this switch it is possible to de-activate the processing of this
+    component, without removing the data from the configuration file.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>list-most-recent</td>
+   <td>If set to yes a list with the most recent rpms provided by the
+     component is being created.  This can be usefull for automatic
+     installation programs, like e.g. autoyast.  The list is called
+     <b>contlist.&lt;component name>.bz2</b> and is stored in the
+     directory "base" of the apt repository
+   </td>
+   <td align=center valign=top>yes</td>
+  </tr>
+  <tr>
+   <td valign=top>scan</td>
+   <td>Activate or de-activate scanning of the rpm directory.  De-activating
+    scanning of an rpm directory might be usefull for rpm directories that
+    won't change anymore, are stored on removable media, such as cd, dvd,
+    usb sticks, etc.  Scanning can be manually activated from the command line
+    with the argument --scan.
+   </td>
+   <td align=center valign=top>yes</td>
+  </tr>
+  <tr>
+   <td valign=top>update-rpms</td>
+   <td>Activate or de-activate downloading of rpms from the download server
+    for this specific component.
+   </td>
+   <td align=center valign=top>yes *1</td>
+  </tr>
+ <table>
+</p>
+<p><small>cla: command line argument<br>
+ *1: global, not for 1 component in particular</small>
+</p>
+

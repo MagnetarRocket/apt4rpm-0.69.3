@@ -1,0 +1,17 @@
+<p>The accept tag is used to filter rpms on their full name (including path)
+ into the apt repository.  This can be used to select rpms from an rpm
+ repository without a structure.  For example a rpm repository that has been
+ devided mainly by people who have their rpms devided by version.
+ The filter has been constructed with <i>grep -E</i>.  The regular expressions
+ that apply for grep can be used here as well.
+</p>
+<p>In case one would like to accept rpms for release 9.0 and the ppc
+ architecture one can make the following rule:<br>
+ &lt;accept>9.0.*ppc&lt;/accept>.  Which will actually result in
+ <i>grep -E "9.0.*ppc"</i><br>
+ A similar result can be obtained by using 2 accept tags:<br>
+ &lt;accept>9.0&lt;/accept> and<br>
+ &lt;accept>ppc&lt;/accept><br>
+ This will result in
+ <i>grep -E "9.0|ppc"</i>.<br>
+</p>

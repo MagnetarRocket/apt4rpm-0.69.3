@@ -1,0 +1,82 @@
+<p>An explanation of the attributes belonging to the element distribution.
+</p>
+<p>
+ <table class='synopsis' border='1' cellspacing='0' cellpadding='4'>
+  <thead>
+   <th>variable</th>
+   <th>explanation</th>
+   <th>cla</th>
+  </thead>
+  <tr>
+   <td valign=top>id</td>
+   <td>The unique name of this distribution.  This name will be used to select
+    the distribution on the command line, so make it an easy one to remember.
+   </td>
+   <td align=center valign=top>yes</td>
+  </tr>
+  <tr>
+   <td valign=top>patch-rpm-component</td>
+   <td>This is the same option as the <i>patch-rpm-patch</i> option in the
+    &lt;opt&gt; element.  The main
+    difference is that the <i>patch-rpm-component</i> option here operates at
+    distribution level. It overwrites the global value that is specified by
+    the <i>patch-rpm-patch</i> argument in the &lt;opt> element.
+    If the <i>patch-rpm-patch</i> argument is not defined here at distribution
+    level the value specified in the &lt;opt> element is used.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign="top">process</td>
+   <td>With this attribute processing of an archive (which is actually a
+    combination of distribution, version and architecture) can be activated or
+    de-activated without the need to remove the configuration data from the
+    configuration file.  This may be usefull for archives that e.g. have no
+    update activaty or in case the vendor discontinued the distribution.  When
+    processing is de-activated (process="no") the actual apt archive remains to
+    exist, but it will not be updated.  If a update is needed the command line
+    argument --dist-id &lt;distribution id> can be used to update the apt
+    repository manually. 
+   </td>
+   <td align="center" valign="top">yes</td>
+  </tr>
+  <tr>
+   <td valign=top>security-component</td>
+   <td>This is the same option as the <i>security-component</i> option in the
+    &lt;opt&gt; element.  The main
+    difference is that the <i>security-component</i> option here operates at
+    distribution level. It overwrites the global value that is specified by
+    the <i>security-component</i> argument in the &lt;opt> element.
+    If the <i>security-component</i> argument is not defined here at distribution
+    level the value specified in the &lt;opt> element is used.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>structure</td>
+   <td>With this element the structure of the apt archive can be set.<br>
+    The following structure types are available:
+    <ol>
+     <li>dist/version-architecture
+     </li>
+     <li>dist/version/architecture
+     </li>
+     <li>dist/version/language/architecture
+     </li>
+     <li>User specified, via the element (tag) &lt;archive>
+     </li>
+    </ol>
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>yum</td>
+   <td>Add a yum repository to the distribution.
+   The yum repository will be created in $topdir/$repdir/yum,
+   neighboring to apt's "base" directory.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+ <table>
+</p>
+<p><small>cla: command line argument</small></p>

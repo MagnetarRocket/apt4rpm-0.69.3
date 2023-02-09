@@ -1,0 +1,30 @@
+<p>Specify the url where the rpms are located that must be imported
+ into the apt repository.  The format of url is without specifying the
+ protocol.  The protocol is specified with the attribute "method".<br>
+</p>
+
+<p>Attribute explanation:</p>
+<table class='synopsis' border='1' cellspacing='0' cellpadding='4'>
+ <thead>
+  <th>variable</th>
+  <th>explanation</th>
+  <th>cla</th>
+ </thead>
+ <tr>
+  <td valign=top>method</td>
+  <td>The method to retrieve the url.
+  </td>
+  <td align=center valign=top>no</td>
+ </tr>
+<table>
+<p><small>cla: command line argument</small></p>
+
+<p>Examples are:<br>
+ &nbsp;&lt;url method="file">extra&lt;/url> (this is relative to topdir)<br>
+ &nbsp;&lt;url method="file">update/myrpms&lt;/url><br>
+ &nbsp;&lt;url method="file">../etc&lt;/url><br>
+ &nbsp;&lt;url method="ftp">ftp.downloadserver.uu/pub/linux/my/distro&lt;/url>
+</p>
+<p>The protocol specifiers: "file:///" and the "ftp://" are not specified
+ inside the tag.  These are specified by the attribute "method."
+</p>

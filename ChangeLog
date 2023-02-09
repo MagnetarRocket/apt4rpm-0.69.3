@@ -1,0 +1,2414 @@
+2005-02-27 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: deal correctly with directories that have been
+	configured in aptate's config file with double (or more) slashes.
+
+2005-02-13 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: the rpm --nosignature option is invalid for
+	rpm version 3.  Introduce a new variable RPM_NOSIGNATURE_ARG for this
+	reason. 
+
+2005-02-02 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: provide an exit value telling that 1 or more
+	distid's were locked.  On request of Eberhard.
+
+2005-01-24 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: prevent incompatible warning messages from rpm
+	by using rpm argument --nosignature.
+
+2005-01-06 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: fix a bug that updated components are not to
+	the final repository location
+
+2004-12-30 Richard Bos <rbos@users.sourceforge.net>
+
+	* bootstrap: add support for automake 1.9
+	* Makefile.am: apt4rpm.xml can not be processed by xmlto to ps,
+	use db2ps instead
+	* configure.ac: reflect change in Makefile.am
+	* apt4rpm.spec.in: add build requirement for db2ps
+
+2004-12-30 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: add an error message when the user uses an
+	absolute path instead of a relative path.
+	* server/aptate.in: rewrote the addition of variables to a list
+	* Makefile.am: Ensure that the file ref.conf is distributed
+	
+
+2004-12-29 Richard Bos <rbos@users.sourceforge.net>
+
+	* apt4rpm.spec.in: added perl-XML-LibXML-Common and perl-XML-SAX
+	as depencies for suse
+
+2004-11-12 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: trap - signal_spec (trap signal_spec is
+	abandoned in bash3).
+
+2004-10-25 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: add code to check that the perl XML modules
+	are working correctly
+	* config/ref.conf: added. Needed for the perl XML modules check.
+
+2004-10-06 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Version 0.69.1.
+	* server/aptate.in: Change quoting to allow white spaces in TOPDIR.
+	* server/aptate.in: Further "grep -qw" fixes.
+	* server/aptate.in: More POSIX-[[]].
+	* server/aptate.in (make_links): Eliminate $FILE.
+	* lib/Aptate/Config.pm (config): Double-quote return-values to
+	prevent aptate from screwing up on eval'ing "CONFIG".
+	* lib/Aptate/Repo.pm (Repo): pushd into repodir instead of using
+	absolute directory, because createrepo can't handle dirs containing
+	whitespaces.
+	* server/aptate.in (full_path): Correctly quote whitespaces.
+	* server/aptate.in: Double-quote.
+	* server/aptate.in: Change "-c|--config-file" argument processing.
+	If "-c|--config-file" is given, do not look into the search-path. If
+	"-c|--config-file" is not given, search "aptate.conf" on the search-path.
+	* server/aptate.in (cache_adm): Eliminate TMP.
+
+2004-10-05 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: change newdcomplist into newcomplist
+
+2004-10-05 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Eliminate AUDIT_RESULT_FILE.
+	* server/aptate.in: Eliminate TMPFILE=TMPDIR/allpkgs.
+	* server/aptate.in: Use mv XXX || MV_EXIT_VAL=1 instead of [[ $? ]].
+	* server/aptate.in: Selectivly copy and delete files.
+	* server/aptate.in: Various quoting fixes ($BASE_ARCHIVE_TMP_DIR, 
+	$TOPDIR, mckdir()).
+	* server/aptate.in: Further POSIX-[[]]'s, misc. minor fixes.
+
+2004-10-04 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Also remove dynamically created
+	SRPMS.$COMPONENT.
+	Expand "for base examples" -loop.
+
+2004-10-01 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: prevent broken links in dynamicly generated
+	components (such as *-prpm and *-drpm), in case they become
+	completely empty.
+	* Tagged for version 0.69.0
+
+2004-09-30 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Eliminate broken usage of grep -w.
+	(echo "fedora-2.91" | grep -w "fedora" matches. This prevented using component
+	name whose names are contained in others).
+	* server/aptate.in: Further POSIX-ation (Eliminate test ==, change
+	[ ] into [[ ]], use || and && instead of -o and -a).
+	* server/aptate.in: Cosmetics.
+
+2004-09-29 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in (build_cache): added support for the new upcoming
+	delta rpms (drpm).  On the fly the function has been simplified,
+	adding a new package type, should now only be a matter of adding a
+	few lines.
+
+	* server/compare_rpm_version.in: added support for delta rpms.
+
+2004-09-29 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in (make_links): Don't copy existing [S]RPMS.$COMP in
+	case they did not change.
+
+2004-09-27 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in (add_component): Allow empty components.
+	(The previous implementation broke src-only repositories and
+	forces clients to edit their sources.list for repositories with
+	frequently changing contents).
+
+2004-09-27 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Add option "-c" for greater uniformity with
+	"apt-get".
+	Parse option string passed to -q and -v.
+
+2004-09-27 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in (make_links): Move creation of */RPMS.$BASENAME and
+	SRPMS.$BASENAME in if -n CACHEDIFF loop.
+	Add release.$BASENAME to file being copied.
+	* server/aptate.in (make_links): Don't call add_components for
+	unchanged components.
+	* server/aptate.in (main): Use separate loops for UNCHANGED and
+	CHANGED_COMPONENTS when creating TMP_HASHFILE.
+	* server/aptate.in (main): Remove repo/-repositories (Obsolete;
+	Repo.pm creates yum/repdata).
+	* server/aptate.in: Eliminate "test" in favor of POSIX [[ ]].
+	* server/aptate.in (main): Conditionally copy changed components only.
+
+2004-09-26 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* lib/Aptate/Config.pm: Revert Richard's mydie hack.
+	* server/aptate.in: Eliminate backtick quotes.
+	* configure.ac: Require autoconf-2.59, automake-1.9, ship bzip'ed
+	tarballs only.
+
+2004-09-25 Richard Bos <rbos@users.sourceforge.net>
+
+	* configure.ac: bumped version to 0.69.0
+
+2004-09-24 Richard Bos <rbos@users.sourceforge.net>
+
+	* lib/Aptate/Config.pm: removed $0 from warnings and error msg as this
+	   is no longer valid, now Config.pm has been converted into a perl
+	   library file.  Changed the function 'die' to 'mydie'.  The latter
+	   has an exit value of 3, while 'die' exist with 2.  The exit value
+	   is checked in aptate, to report a perl configuration problem
+	   (that is perl or a perl module is missing).  Perl's exit value is
+	   than 2.  This "conflicts' with the exit value of 'die'.  Unfortenaly
+	   aptate must check for system - and application errors
+
+2004-09-21 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: report that aptate is locked to stream &3
+	   instead of &4.  It will than be visible when aptate is run
+	   from a cronjob.
+
+2004-09-19 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: changed the way locking was performed.  As Ralf
+	   checked in code to ensure that the final storage location is
+	   always unique, it was now possible to simplify the locking
+	   mechanism.  At the same time the locking is not for the whole
+	   distributor, but it is now for a single distribution version.
+	  The temp repository directory is now prefixed with a dot and
+	   made unaccesible for visitors (700).
+
+2004-08-24 Richard Bos <rbos@users.sourceforge.net>
+
+	* Tagged release 0.68.3
+
+2004-08-23 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: replace exit 1, with apt_exit ERR_* codes.
+
+2004-08-22 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* apt4rpm.spec.in: Use Group: System Environment/Base for FC.
+	* server/aptate.in: Redirect printing of "Bin:/Pat:" to &3.
+
+2004-08-21 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Require autoconf-2.59, automake-1.8.
+
+2004-08-21 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* Makefile.am: Reflect client/apt, client/aptrpm-1,
+	client/rpm-sigchecker having been removed.  Those are now
+	part of the default apt (client).
+	Add lib/Aptate/Repo.pm to EXTRA_DIST.
+
+2004-08-20 Richard Bos <rbos@users.sourceforge.net>
+
+	* client/apt, client/aptrpm-1, client/rpm-sigchecker: Remove.
+
+2004-08-07 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* lib/Aptate/Repo.pm: Install repodata dirs as subdirectory of yum/.
+	* lib/Aptate/Yum.pm: Cosmetics.
+
+2004-07-28 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Add repo support. Some POSIX-ification.
+	Call Aptate::Repo.
+
+2004-07-26 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Remove backing up old yum repositories to
+	ARCHIVE_TMP_ROOT. Install updated yum repositories to ARCHIVE_ROOT.
+
+2004-07-25 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* lib/Aptate/Repo.pm: New.
+	* Makefile.am: Add Repo.pm.
+
+2004-07-25 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Remove function cntlines (Unused).
+
+2004-07-25 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Replace RPM_NV and RPM_NVR by RPM_VR.
+
+2004-06-18 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: aptate --test now uses the regular code to
+	install the apt components.  The repository is installed in the
+	ARCHIVE prefixed with test_.
+
+2004-06-17 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: remove the component directories and the root
+	directory.  This makes it possible that interleaved archives
+	(like: suse/9.0-i386 and suse/9.0-i386/nl can exist in 1 
+	repository.  Before the archive suse/9.0-i386/nl was removed, when
+	the suse/9.0-i386 was installed.  On the fly the re-use of
+	variables has been very improved.
+	The only thing not worked on, is when the option --test is specified
+	on the command line.
+
+2004-06-12 Richard Bos <rbos@users.sourceforge.net>
+
+	* lib/Aptate/Config.pm: exit with exit value 3, so aptate can
+	deal with it correctly.
+	The error msg must now be redirected to STDERR.
+	* server/aptate.in: reflect the change in lib/Aptate/Config.pm
+
+2004-06-10 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* lib/Aptate/Config.pm: Remove ActionGetArchDir.
+	Add checkarchdirs. Call checkarchdirs in ActionConfig.
+	Call getarchdir in dist/ActionDist.
+	Cleanups.
+	* server/aptate.in: Remove call to ActionGetArchDir (Now implicitly
+	handled in ActionDist).
+
+2004-06-09 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* lib/Aptate/Config.pm: Add ActionGetArchDir, getarchdir.
+	Split out retrieving REPDIR into function getrepdir().
+	* server/aptate.in: Retrieve ARCHIVE with ActionGetArchDir.
+
+2004-06-09 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Replace SHARE_DIST_DIR w/ $SHAREDIR/$DISTID.
+
+2004-06-09 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* aptate.spec.in: Set Release: 0.
+	* configure.ac: Version 0.68.3.
+	* lib/Aptate/Config.pm: Remove distid(), distros().
+
+2004-05-20 Richard Bos <rbos@users.sourceforge.net>
+
+	* tagged repository for version 0.68.2
+
+2004-05-10 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* lib/Aptate/Yum.pm: Return early if complist is empty.
+	* lib/Aptate/Config.pm: Add ActionGetSourcesList, getsourceslist.
+	Remove PREFIX_* from config().
+	* server/aptate.in: Reflect changes to lib/Aptate/Config.pm.
+	* NEWS: Add note about having changed sources-list's behavior.
+
+2004-05-08 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Version 0.68.2.
+	* lib/Aptate/Yum.pm: Add verbose messages.
+	* server/aptate.in: Use pushd/popd around genpkglist instead of subshell
+	to get real line numbers in case of errors.
+	Reflect changes to Yum.pm.
+
+2004-05-06 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Version 0.68.1.
+	* server/aptate.in: Use srcidx.$(COMP) instead of global srcidx.
+	Use pushd/popd around gensrcdir instead of subshell to get real line
+	numbers in case of errors.
+
+2004-04-20 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/man/elt.distribution.html: Add short description on "yum".
+
+2004-04-05 Richard Bos <rbos@users.sourceforge.net>
+
+	* Fixed a bug if the rpm --requires output does not end with a <CR>
+
+2004-02-22 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate.dtd: Change default for <opt security-component> to
+	"no".
+	* config/dtd-manual.elt.opt.html: Reflect change above.
+
+2004-02-10 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Pass KEY_NAME to add_sourceslist_examples if
+	using signed repositories.
+
+2004-02-09 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Acknowledge REPDIR when setting up PREFIX_FILE.
+
+2004-02-09 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Eliminate ARCHIVE_TMP_BASE_DIR.
+	Eliminate ARCHIVE_BASE_DIR.
+
+2004-02-05 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Version 0.67.2.
+	* server/aptate.in: Activate Aptate::Yum support.
+	* config/aptate.dtd: Add attribute yum.
+	* lib/Aptate/Yum.pm: First functional implementation.
+
+2004-01-27 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Version 0.67.1
+	* lib/Aptate/Config.pm: Add ActionDist.
+	* Makefile.am: Add Yum.pm. Remove aptate-config.
+	* server/aptate.in: Use perl -MAptate::Config instead of
+	aptate-config.
+
+2004-01-26 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* lib/Aptate/Config.pm: Add and update copyright notice.
+	Add ActionConfig, ActionDistAttrs, ActionMirror, ActionQuery.
+
+2004-01-26 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* lib/Aptate/Yum.pm: New. Initial prototype for a yum support backend.
+
+2004-01-18 Richard Bos <rbos@users.sourceforge.net>
+	* configure.ac: bump version to 0.67
+	* tagged 0.67 release
+
+2004-01-17 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/man/elt.distribution.html: added a description for the
+	   distribution::process attribute.
+
+2004-01-11 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: add process attribute to the distribution tag.
+	* sever/aptate.in: reflect the change above.  Distributions with the
+	   process=no are not processed.  They are only processed if specified
+	   with the --dist-id attribute.
+	* lib/Aptate/Config.pm: updated the --xpath handling, it is no
+	   possible to specify more xpath queries in the --xpath attribute.
+	  (It is not necessary for this update btw, it just happened)
+
+2004-01-04 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: added scan attribute to the component tag.
+	* lib/Aptate/Config.pm: process the component::scan attribute.
+	* server/aptate.in: add new feature to skip the scanning of an
+	   rpm directory.
+	* config/man/elt.component.html: explain the scan attribute.
+
+2003-12-29 Richard Bos <rbos@users.sourceforge.net>
+
+	* Tagged version 0.66.0
+
+2003-12-21 Richard Bos <rbos@users.sourceforge.net>
+
+	* Makefile.am: revert the commit to
+	   config/dtd-manual.ex.aptate.conf.html as it is needed by the
+	   dtd-manual.
+	* apt4rpm.spec.in: moved the BuildRequires and Requires outside
+	   the if vendors leg as they are now common.
+
+2003-12-21 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Bump version to 0.65.7.
+	* Makefile.am: Generate all docs in $srcdir.
+	Rebuild docs only in maintainer-mode.
+	Distribute all docs.
+	Remove config/dtd-manual.ex.aptate.conf.html (non-existing).
+	* apt4rpm.spec.in: BuildRequires: perl bash.
+
+2003-12-20 Richard Bos <rbos@users.sourceforge.net>
+
+	* doc/example/sources.list: removed, integrated with doc/apt4rpm.xml.
+	* doc/example/vendors.list: removed, integrated with doc/apt4rpm.xml.
+	* Makefile.am: doc/example/{aptate.minimal.sgml,aptate.sgml} are now
+	   named doc/example/{aptate.minimal.xml,aptate.xml} (they are xml
+	   after all).
+	  Relocate aptate-convert to libdir from bindir.
+	* doc/apt4rpm.xml: updated to reflect changes above.
+	* apt4rpm.spec.in: added a comment about the usage of LANG=C in front
+	   of the make command to obtain A4 postscript output.
+
+2003-12-20 Richard Bos <rbos@users.sourceforge.net>
+
+	* doc/apt4rpm.sgml: removed
+	* doc/apt4rpm.xml: added
+	* Makefile.am: replace db2html and db2ps by xmlto, further adjust
+	   made to anticipate on the output files of xmlto.
+	* configure.ac: updated to reflect the change above.
+	* apt4rpm.spec.in: xmlto is now required,
+	   jade, jadetex, docbook-toys are not needed anymore.
+	* doc/index.html: added updated to reflect the change above.
+
+2003-12-15 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Bump version to 0.65.6.
+	* Makefile.am: Fix lib/Aptate/Version.pm handling for VPATH-builts.
+
+2003-12-15 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Bump version to 0.65.5.
+	* Makefile.am (check-convert): Set perllibdir to let aptate-convert
+	find the perl-modules.
+	* config/man/elt.repdir.html: Fix typos (s/aptdir/repdir/g).
+	* config/aptate-convert.in: Remove stray use Aptate:: line.
+
+2003-12-15 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/man/elt.repdir.html: New.
+	* Makefile.am: Add elt.repdir.html.
+	* config/aptate.dtd: Add repdir.
+	* server/aptate.in: Add repdir.
+
+2003-12-15 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* Makefile.am: Add lib/Aptate/Config.pm, lib/Aptate/Version.pm.
+	* config/aptate-convert.in: Use perl-modules.
+	* server/aptate-config.in: Use perl-modules.
+
+2003-12-15 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* lib/Aptate/.cvsignore: New.
+	* lib/Aptate/Config.pm: New. Extracted from aptate-config.
+	* lib/Aptate/Version.pm.in: New.
+
+2003-12-12 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Remove APTATECONFDIR, APTATELIBDIR, APTATEDATADIR.
+	Don't generate aptate, aptate-config, aptate-convert,
+	compare_rpm_version, scripts.
+	* Makefile.am: Add sed-rule to propagate APTATECONFDIR, APTATELIBDIR,
+	APTATEDATADIR into generated scripts.
+	Use sed-rule to generate aptate, aptate-config, aptate-convert,
+	compare_rpm_version, scripts.
+
+2003-12-11 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Use grep -E to search for packages.
+
+2003-11-07 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Bump version to 0.65.4.
+	Rename --enable-docdir into --enable-pkgdocdir.
+	* apt4rpm.spec.in: Use pkgdocdir instead of docdir.
+	* Makefile.am: Remove broken doc/index.html rule.
+	Fix broken generation of doc/html/apt4rpm.html.
+
+2003-11-16 Richard Bos <rbos@users.sourceforge.net>
+
+	* doc/index.html: added.
+
+2003-11-15 Richard Bos <rbos@users.sourceforge.net>
+
+	* configure.ac: set CLEAN_DB2XX depending on DB2HTML and DB2PS.
+	* doc/index.html: added.
+	* Makefile.am: include index.html.
+	   Remove the right files after running DB2HTML and DB2PS.
+	* This makes apt4rpm ready for release.
+
+2003-11-07 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* Makefile.am: cd doc before running DB2HTML.
+	Be more selective about removing DB2HTML generated files.
+
+2003-11-06 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/mirror.xml: Removed (Unused).
+
+2003-11-06 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* apt4rpm.spec.in: Fix typo.
+
+2003-11-06 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* Makefile.am: Merge in remaining parts from doc/Makefile.am.
+	Add MAINTAINER_MODE to work around defects in db2html and
+	dtd2html (These tools suck).
+	Rebuild manpage in maintainer-mode, only.
+	* configure.ac: Add maintainer-mode.
+	Refuse to build apply maintainer-mode in VPATH-builts.
+	Remove --enable-docs.
+	Reflect having removed doc/Makefile.am.
+	Add dist-bzip2 tarball.
+	* doc/Makefile.am: Remove.
+	* apt4rpm.spec.in: Use bzip'ed tarball.
+
+2003-11-06 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* Makefile.am: (check-convert) Correct path to aptate.dtd.
+	Merge in generation of doc/apt4rpm.ps from doc/Makefile.am.
+	Make DTDDOCS dist_*_DATA.
+	* doc/Makefile.am: Remove handling of doc/apt4rpm.ps.
+
+2003-11-06 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptatemod.in: Remove.
+	* Makefile.am: Reflect change above.
+	* configure.ac: Reflect change above.
+
+2003-11-05 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* Makefile.am: Merge in config/Makefile.am.
+	* config/Makefile.am: Remove (Merged into Makefile.am).
+	* configure.ac: Reflect changes above.
+
+2003-11-05 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* Makefile.am: Merge in server/Makefile.am.
+	Merge in server/methods/Makefile.am
+	* server/Makefile.am: Remove (Merged into Makefile.am).
+	* server/methods/Makefile.am: Remove (Merged into Makefile.am).
+	* configure.ac: Reflect changes above.
+
+2003-11-05 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* Makefile.am: Merge in client/Makefile.am.
+	* client/Makefile.am: Remove (Merged into Makefile.am).
+	* configure.ac: Reflect changes above.
+
+2003-11-05 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/Makefile.am (check-convert): Reflect aptate.conf.xml having
+	been removed.
+
+2003-11-05 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Require at least autoconf-2.54/automake-1.7.
+	Bump version to 0.65.3
+	* bootstrap: Ditto.
+	* config/Makefile.am: Fix dependencies bogusly using DTDDOC_sources
+	instead of DTDDOCS_sources.
+	Clean DTDDOCS only if DTD2HTML is present.
+
+2003-11-02 <rbos@users.sourceforge.net>
+
+	* config/*: removed the manual added <a href=dtd-manual... links
+	   as the links are not correct if the manual is reviewed in 
+	   frame mode.
+
+2003-10-31 <rbos@users.sourceforge.net>
+
+	* config/Makefile.am: add html frame base dtd documentation
+	* config/dtd-frame.html: added.
+	* config/dtd-frame.main.html: added.
+	* config/dtd-frame.tree.html: added.
+	* config/dtd-frame.alpha.html: added.
+
+2003-10-30 <rbos@users.sourceforge.net>
+
+	* config/aptate.conf.xml: removed.
+	* config/dtd-manual.book.overview.html: removed.
+	* config/dtd-manual.ex.aptate.minimal.xml.html: removed.
+	* config/dtd-manual.ex.aptate.xml.html: added.
+	* config/dtd-manual*: updated, timestamp has been removed from the
+	   file.  It should now be easier to keep the documentation created
+	   with dtd2html in sync in the cvs repository.
+
+2003-10-28 <rbos@users.sourceforge.net>
+
+	* configure.ac: search for dtd2html as well (besides dtd2html.pl)
+	* config/Makefile.am: updated to reflect the changes in dtd2html
+	   and apt4rpm development
+	* config/dtd-manual.book.overview.html; removed.
+	* config/dtd-manual.ex.aptate.minimal.xml.html: removed.
+
+2003-10-28 <rbos@users.sourceforge.net>
+
+	* apt4rpm.spec.in: Updated the group for suse
+	   check RPM_BUILD_ROOT for "/" during clean up
+
+2003-10-26 <rbos@users.sourceforge.net>
+
+	* doc/apt4rpm.sgml: updated and replaced the examples config files
+	   by the files aptate.xml and aptate.minimal.xml
+	* doc/Makefile.am: refelct change above.
+	* config/Makefile.am: reflect change above.
+
+2003-10-25 <rbos@users.sourceforge.net>
+
+	* server/aptate.in: add a time left indication while creating the
+	   cache file.
+	* doc/apt4rpm.sgml: updated
+
+2003-10-24 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate-config.in: Process 'opt/sharedir' to return an
+	absolute SHAREDIR.
+	* server/aptate.in: Reflect change above.
+	Eliminate REL_SHAREDIR, REL_SHARE_DIST_DIR.
+
+2003-10-06 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Use kB to compute sizes (The output of du and df
+	are in kB, helps to avoid overflows).
+
+2003-10-06 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Fix bogus arithmetic expressions.
+
+2003-09-05 <rbos@users.sourceforge.net>
+	* server/aptate.in: prevent an error when the status files are
+	   corrupted.
+
+2003-08-30 <rbos@users.sourceforge.net>
+	* NEWS: prepare for bug release 0.65.2
+	* client/apt: minor updates to make it interact better with help2man
+
+2003-08-26 <rbos@users.sourceforge.net>
+	* client/apt: added --hold option
+
+2003-08-26 <rbos@users.sourceforge.net>
+	* server/aptate.in: fixed a bug in case aptate was called with
+	   --config and the configuration file is in the current working dir
+
+2003-08-23 <rbos@users.sourceforge.net>
+	* apt4rpm.spec.in: moved the mktemp dependency from buildrequires to
+	   requires Added buildrequires docbook-toys jadetex for suse
+
+2003-08-17 <rbos@users.sourceforge.net>
+	* NEWS: prepare for bug release 0.65.1
+
+2003-08-17 <rbos@users.sourceforge.net>
+	* server/aptate.in: fixed the use of an incorrect variable to determine
+	   "signed packages only setting" for the creation of the contlist.
+
+2003-08-12 <corsepiu@users.sourceforge.net>
+
+	* apt4rpm.spec.in: Use a distribution dependent pkgdocdir to install
+	the docs.
+
+2003-08-10 <rbos@users.sourceforge.net>
+	* server/aptate.in: Add the component name in the progress message that
+	   reports corrupted rpms.
+
+2003-08-09 <rbos@users.sourceforge.net>
+	* server/aptate.in: Added functionality to calculate the available
+	   filespace.  If there is sufficient space install the repository,
+	   if there is not enough space: keep the old one around and do not
+	   install the new repository.  The caches are saved, though.
+
+2003-08-05 <rbos@users.sourceforge.net>
+	* server/aptate.in: the number of MD5 failures encountered in a
+	   cache are now reported in "apt repository creation stage".
+
+2003-08-03 <rbos@users.sourceforge.net>
+	* server/aptate.in: remove the functionality that creates the *.old
+	   backup repository.  They do not seem to be used, and are "ugly"
+	   to see in the repository.
+	  The creation of contlist did not check for valid packages, being
+	   MD5 check passed or/and GPG check passed.
+
+2003-07-09 <rbos@users.sourceforge.net>
+	* server/compare_rpm_version.in: Added support for architecture
+	  dependend processing of rpms specified by the --allarchs command line
+	   option.
+	  As spin off the program is faster.
+	  The default output format has changed.  All fields (including version
+	   and reason) are now all seperated by a semicolon, and no additional
+	   strings are added.   Making it much easier to process the output by
+	   other programs.
+	* server/aptate.in: reflected the changes in compare_rpm_version.in.
+	   compare_rpm_version is now called with the --format compact
+	   argument.
+
+2003-06-09 <rbos@users.sourceforge.net>
+	* client/apt-rpm: added 2 options: sourceslist and force-rpm-install
+
+2003-05-17 <rbos@users.sourceforge.net>
+	* server/aptate.in: -options should be --options
+
+2003-05-16 <rbos@users.sourceforge.net>
+	* client/apt-rpm: -options should be --options
+
+2003-05-12 <rbos@users.sourceforge.net>
+	* server/aptate.in: added LANG=C in front of date
+
+2003-05-05 <rbos@users.sourceforge.net>
+	* server/aptate.in: changed LANG=en_US to the portable LANG=C
+
+2003-05-02 <rbos@users.sourceforge.net>
+	* server/aptate.in: register the number of bad rpms, this ensure that
+	    the counter of rpms added to the cache is correct.
+
+2003-05-01 <rbos@users.sourceforge.net>
+
+	* server/aptate.in: revert the change from report-once
+	* server/Makefile.am: removed aptatemod, it is not maintained for
+	   a log time.
+	* config/aptate.dtd: revert the change from report-once
+	* apt4rpm.spec.in: apt-server is now required (from apt-0.5.5)
+	* configure.ac: prepare for the next release
+
+2003-04-27 <rbos@users.sourceforge.net>
+
+	* server/aptate.in: the rpm analysis procedure from the previous
+	   update was not correct.
+
+2003-04-26 <rbos@users.sourceforge.net>
+
+	* server/aptate.in: add LANG=en_US to rpm --checksig to make the
+	   output language independent.
+	  Changed argument report-only to report, added report-once.
+	  Bad pkgs that are just corrupt are now treated the same as rpms
+	   that fail the MD5 test
+	* config/aptate.dtd: changed bad_rpms_mode=report-only to report,
+	   added report-once
+	* apt4rpm.spec.in: changed the dependencies for suse
+
+2003-04-25 <rbos@users.sourceforge.net>
+
+	* server/aptate.in: call function displ_bad_rpms just for exiting aptate
+
+2003-04-12 <rbos@users.sourceforge.net>
+
+	* server/aptate.in: change the value of variable FOLLOW to
+	   FOLLOW="-follow -xtype f".
+	  Provide output in case aptate runs in a quiet mode and genpkglist
+	   or gensrclist is run.  The output was "component bin:" it is
+	   now "component bin: done"
+
+2003-04-05 <rbos@users.sourceforge.net>
+
+	* NEWS: prepare for next release (0.64.3)
+	* configure.ac: prepare for next release (0.64.3)
+	* bootstrap: make it work with the latest version of automake
+
+2003-04-03 <rbos@users.sourceforge.net>
+
+	* server/aptate.in: removed the cache conversion code (adding the size
+	   real physical size to the existing cache)
+	* server/comparerpm_version.in: make sure that rpms are recognized that
+	   start with a string.
+	  Added some more clarifying (hopefully) comments.
+
+2003-03-19 <rbos@users.sourceforge.net>
+
+	* server/aptate.in: an escaped character was sent to the "normal"
+	   output screen.  It seems the character is not needed => removed it. 
+
+2003-03-15 <rbos@users.sourceforge.net>
+
+	* configure.ac: updated release to 0.64.2
+	* NEWS: prepare for the next release
+
+2003-03-03 <rbos@users.sourceforge.net>
+
+	* server/aptate.in: prevent a "No such file or directory" error
+	   message when aptate is run for the first time for a new archive.
+
+2003-03-03 <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Always provide compressed *list files (changed
+	   a check from "[ -s file ] to [ -r file]".
+	  Move the line "cd $TOPDIR".  rpms are now stored at the right
+	   location after being mirrored.
+
+2003-03-03 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Check for bash. Change comments in checks to start
+	with small letters.
+	* server/aptate.in: Use @BASH@ (aptate is a bash-script not a
+	/bin/sh-script).
+	Fix misc typos.
+
+2003-02-27 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Let aptate use mktemp to create a temp directory
+	  It's more secure
+
+2003-02-27 Marcel Ritter <sfmarcel@users.sourceforge.net>
+
+	* server/aptate.in: fix a the processing of the quiet argument.
+
+2003-01-30 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Made preparations to add the possibility to have
+	apt repositories created for CDs.  Resulting in a major reshuffling
+	of code.
+	Added a new argument --action with the possible values for now
+	server (default) and mirror.  Future values may be CD and DVD too.
+	Improved locking mechanism.
+	Changed output.
+	The cache will now store the filesize of the rpm as well
+	Code cleanup.
+	* server/compare_rpm_version.in: add support to cope with the additional
+	filesize field in aptate caches.
+	Add the ability to filter on "src" rpm types (-rpmtype src).
+	Added an additional output format.
+
+2003-01-21 Richard Bos <rbos@users.sourceforge.net>
+
+	* NEWS: updated to prepare for the 0.64 release
+	* TODO: added todo to improve the examples/sources.list.* files
+
+2003-01-09 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Change ESC_RCP, ESC_SCP and ESC_CLEOL into RCP,
+	   SCP and CLEOL (the prefix ESC_ does say much).
+	  Changed CLEOL into "$ESC\1330K", which gives less parsing problems
+	   in my editor
+	  Have the directories $ARCHIVE_TMP_BASE_DIR,
+	   $ARCHIVE_TMP_ROOT/RPMS.$BASENAME and
+	   $ARCHIVE_TMP_SRPM_ROOT/SRPMS.$BASENAME made by mckdir instead of
+	   install -d -m 755
+	* config/aptate.minimal.xml: Added
+	* config/dtd-manual.ex.aptate.minimal.xml.html: Added
+	* config/Makefile.am: reflect the addition of dtd-manual.ex.aptate.minimal.xml.html
+
+2003-01-09 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: fixed a bug in case PREFIX_FILE was empty
+	* config/man/elt.opt.html: update doc for argument "flat"
+
+2003-01-07 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: added audit code to find the root why some
+	   files have a unexpected 0 byte size
+	  Reformatted the argument check (getopt) code
+
+2003-01-06 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: updated the function chkvar and the related calls
+	   to chkvar to be able to detect an "*" in a variable.
+
+2003-01-05 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: updated mkdir to mckdir to check the have the
+	   result of the mkdir command checked.
+	  The repository in test mode was stored at the wrong location
+	  The caches are not saved in test mode.  The caches are stored
+	   at: $ARCHIVE_TST_ROOT/cache
+	  Use "sort -u" when creating the contlist.bz2 file to prevent
+	   duplicate entries.
+	* config/man/elt.opt.html: corrected the debug information
+
+2003-01-04 Richard Bos <rbos@users.sourceforge.net>
+
+	* configure.ac: increased the version to 0.64
+
+2003-01-04 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: added the element "language" to the element
+	   distribution.
+	  Added the argument "structure" to the element distribution
+	* server/aptate-config.in: reflect the changes in the dtd.  Output the
+	   distribution dependent variables LANGUAGE and ARCH_STRUCTURE
+	* server/aptate.in: added code to provide different type of archives.
+	   Currently the not much saying archive types 1, 2, 3 and are
+	   available.  Type 1 results in the archive currently available
+	   (dist/vers-arch).  The others result in:
+	   2: dist/vers/arch
+	   3: dist/vers/lang/arch
+	   4: user provided (custom) archive
+	* config/man/elt.language.html: added
+	* config/man/elt.archive.html: added
+	* config/man: updated several docu files
+	* config: updated several docu files
+
+2003-01-04 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: updated the function chkvar.  Use the posix
+	   class [[:punct:]] to check for unwanted characters in the
+	   variables DIST, ARCH, VERSION and TOPDIR.  Updated the error
+	   message too.
+
+2003-01-03 Richard Bos <rbos@users.sourceforge.net>
+
+	* NEWS: updated to reflect the latest changes
+	* configure.ac: increased the version to 0.63.2
+	* server/aptate.in: improved debug handling and output
+
+2003-01-02 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: source code used to audit the repository and cache
+	   after a crash of genpkglist/gensrclist and that was written multiple
+	   times has been moved into a new function audit_component.
+	  Same story for the code that compresses the generated databases, this
+	   code has been moved into a new function bzip2_checked
+	  The last remaining hard coded archive path (../../../..) has been
+	   moved to a variable.
+	  Update/changed the progress markers
+	  Added a progress marker while creating the release file and while
+	   doing the find for rpm packages on the harddisk
+
+2003-01-01 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: moved the "date" function from the while loop
+	   in the function build_cache to be determined before the while loop.
+	  Moved the MD5/GPG determination code from the function check_rpm
+	   to the build_cache function.  That code was called only once.
+	  Aptate now reports how many rpms are being added and removed to the
+	   cache, instead of displaying the total number
+	  The variable OPT_TESTPHASE has been renamed to OPT_TEST
+	  Since this version test versions are rejected for repository with a
+	   a non flat sturcture.  It seems not possible to support this 
+	   correctly.
+
+2002-12-30 Richard Bos <rbos@users.sourceforge.net>
+
+	* configure.ac: increased the version a little to 0.63.1
+
+2002-12-30 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Consolidated the exit (error) codes.  The exit
+	   codes are now defined by variable names.
+
+2002-12-30 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: removed unused code.
+	  Added better debug output
+	  The argument --debug sets no a verbose level which can be further
+	   increased with the --verbose argument
+	  The variable TOPDIR, DIST, VERSION and ARCHITECTURE are now better
+	   checked.  The characters *, / and & are not allowed anylonger too.
+	  Moved the creation of the temp directory to the latest possible
+	   position.
+	  Added exit error codes
+
+2002-12-28 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: moved code to determine if an apt component
+	   actually holds rpms and that was written twice to a new
+	   function add_component.
+	   At the same time the function add_release has been integrated into
+	   the new function add_component.
+
+2002-12-27 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: updated the exit code by splitting the existing
+	   functions into more functions.  By doing so the exit code is now
+	   more flexible and can be better reused.
+
+2002-12-20 Richard Bos <rbos@users.sourceforge.net>
+
+	* NEWS: added the release notes for release 0.63
+
+2002-12-19 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Improved the lock mechanism
+
+2002-12-19 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: removed the cache conversion (from 6 to 9 fields)
+	  Fixed a bug: links in the srpm directories were wrong after a change
+	   of the repository structure (from flat to noflat or vice versa).
+	   At the same itime introduced the requirement that a structure
+	   change can only be applied in combination with the (new) --force
+	   argument.
+
+2002-12-19 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/compare_rpm_version.in: added a comment
+	* server/aptate.in: fixed an exit code check.
+	  Added some comment
+	* TODO: updated
+
+2002-12-18 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/compare_rpm_version.in: added STDERR to the debug statements
+	  Removed the "final verdict" debug print statement as it reported
+	   Uninitialized variable errors in case src rpms are processed
+	* server/aptate.in: consolidated many "randomly" used variables that
+	   were used to construct directories and such into variables.
+	  Splitted the apt_exit function and stored some of the code into the
+	   function clean_up.
+	  Changed the variable D_V_A into the more independent and descriptive
+	   variable ARCHIVE.
+
+2002-12-15 Richard Bos <rbos@users.sourceforge.net>
+
+	* This is it; release 0.62 :)
+
+2002-12-14 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Find rpms although the top directory is a
+	   linked directory
+	  Fixed a bug when perl libraries missed
+	  Added a --rebuild-links option
+	* config/aptate.dtd: make "no" the default value for the follow
+	   argument
+	* config/man/elt.opt.hmtl: adjusted the explanation that belongs to
+	   to the follow argument
+
+2002-12-11 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/compare_rpm_version.in: compare version/release strings
+	    alphanumerically in case the numerical comparasion results in a
+	    status quo.
+
+2002-12-10 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: Made the default value for the <opt> tag argument
+	   follow yes (instead of no).  This will result in follow links
+	   while building the caches.
+	* server/aptate.in: fixed a bug in determining the md5/gpg rpm
+	   characteristics
+	* config/man/elt.opt.html: reflect the change in aptate.dtd
+
+2002-12-02 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/...: updated documentation
+
+2002-12-02 Ralf Corsepius <corsepiu@faw.uni-ulm.de>
+
+	* server/aptate.in: [check_rpm] move local declaration of OUTPUT to
+	the beginning of the function, otherwise the $? gets corrupted.
+
+2002-12-02 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/compare_rpm_version.in: added selection for rpmtype bin and pat
+	* server/aptate.in: add selection on rpmtype again when looking for the
+	   most recent rpms
+
+2002-12-02 Ralf Corsepius <corsepiu@faw.uni-ulm.de>
+
+	* server/aptate.in: [build_cache] Use find $SRCDIR instead of find $SRCDIR/*.
+	[main] Dereference $REBUILD_CACHE in call to make_links
+
+2002-11-30 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/compare_rpm_version.in: Added (external perl script)
+	* server/aptate.in: reflecting the change of adding the script
+	    compare_rpm_version
+	* configure.ac: add support for compare_rpm_version.in
+	* server/makefile.am: add support for compare_rpm_version.in
+
+2002-11-29 Ralf Corsepius <corsepiu@faw.uni-ulm.de>
+
+	* configure.ac: Bump version to 0.61.1.
+	* config/aptate.dtd: Add 
+        <opt><distribution security-component="..">,
+	<opt><distribution patch-rpm-component="..">.
+	* server/aptate-config.in: Add distattrs support.
+	* server/aptate.in: Use distattrs.
+
+2002-11-29 Ralf Corsepius <corsepiu@faw.uni-ulm.de>
+
+	* configure.ac: Bump version to 0.61.0.
+	* server/Makefile.am: Install aptate-config to apt4rpm_libdir.
+	* server/aptate.in: Add APTATE_CONFIG.
+	* server/aptate-config.in: Use xpaths to select distibutions.
+
+2002-11-27 Ralf Corsepius <corsepiu@faw.uni-ulm.de>
+
+	* server/aptate.pl.in: Remove.
+
+2002-11-26 Ralf Corsepius <corsepiu@faw.uni-ulm.de>
+
+	* apt4rpm.spec.in: Add jadetex to SuSE's BuildPreReq (Otherwise
+	db2ps does not work with SuSE-8.1).
+
+2002-11-25 Ralf Corsepius <corsepiu@faw.uni-ulm.de>
+
+	* config/Makefile.am: Use $(srcdir) in paths in check-convert and
+	check-xmllint.
+	Directly generate style.css from man/style.css.
+	* config/aptate-convert.in: Append dir to mirrorfiles.
+	* config/.cvsignore: Add style.css.
+
+2002-11-25 Ralf Corsepius <corsepiu@faw.uni-ulm.de>
+
+	* configure.ac: Bump version to 0.61
+	* config/dtd-manual.ex.aptate.conf.html: Create as result of merger with libxml2_branch.
+
+2002-11-25 Ralf Corsepius <corsepiu@faw.uni-ulm.de>
+
+	* config/dtd-manual.book.elements_index.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.book.entities_index.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.book.examples_list.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.book.home.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.book.notations_index.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.book.overview.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.book.prolog.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.accept.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.add-arg.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.architecture.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.authorization.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.component.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.distribution.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.email.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.excludedir.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.name.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.opt.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.reject.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.script.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.sharedir.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.sources-list-file.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.sources-list-ftp.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.sources-list-http.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.topdir.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.url.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.version.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.elt.wget.html: Create as result of merger with libxml2_branch.
+	* config/dtd-manual.ex.aptate.conf.html: Create as result of merger with libxml2_branch.
+
+2002-11-25 Ralf Corsepius <corsepiu@faw.uni-ulm.de>
+
+	* .cvsignore: Merger from libxml2_branch.
+	* Makefile.am: Merger from libxml2_branch.
+	* NEWS: Merger from libxml2_branch.
+	* TODO: Merger from libxml2_branch.
+	* apt4rpm.spec.in: Merger from libxml2_branch.
+	* configure.ac: Merger from libxml2_branch.
+	* client/Makefile.am: Merger from libxml2_branch.
+	* client/README: Merger from libxml2_branch.
+	* client/aptrpm-1: Merger from libxml2_branch.
+	* config/.cvsignore: Merger from libxml2_branch.
+	* config/Makefile.am: Merger from libxml2_branch.
+	* config/aptate-convert.in: Merger from libxml2_branch.
+	* config/aptate.dtd: Merger from libxml2_branch.
+	* config/aptate.xml: Merger from libxml2_branch.
+	* config/mirror.xml: Merger from libxml2_branch.
+	* doc/apt4rpm.sgml: Merger from libxml2_branch.
+	* server/.cvsignore: Merger from libxml2_branch.
+	* server/Makefile.am: Merger from libxml2_branch.
+	* server/aptate.in: Merger from libxml2_branch.
+	* server/aptate.pl.in: Merger from libxml2_branch.
+
+2002-11-25 Ralf Corsepius <corsepiu@faw.uni-ulm.de>
+
+	* client/aptrpm-2: Create as result of merger with libxml2_branch.
+	* client/rpm-sigchecker: Create as result of merger with libxml2_branch.
+	* config/ChangeLog.aptate.dtd: Create as result of merger with libxml2_branch.
+	* config/man/elt.accept.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.add-arg.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.authorization.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.component.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.distribution.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.excludedir.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.name.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.opt.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.reject.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.script.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.sharedir.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.sources-list-file.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.sources-list-ftp.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.sources-list-http.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.topdir.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.url.html: Create as result of merger with libxml2_branch.
+	* config/man/elt.wget.html: Create as result of merger with libxml2_branch.
+	* config/man/style.css: Create as result of merger with libxml2_branch.
+	* server/aptate-config.in: Create as result of merger with libxml2_branch.
+	* server/methods/.cvsignore: Create as result of merger with libxml2_branch.
+	* server/methods/Makefile.am: Create as result of merger with libxml2_branch.
+	* server/methods/script.in: Create as result of merger with libxml2_branch.
+
+2002-11-25 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* test/.cvsignore: Delete as result of merger from libxml2_branch.
+	* test/Makefile.am: Delete as result of merger from libxml2_branch.
+	* test/TESTSCENARIO: Delete as result of merger from libxml2_branch.
+	* test/aptest-0.4: Delete as result of merger from libxml2_branch.
+	* test/aptest-0.4.spec: Delete as result of merger from libxml2_branch.
+	* test/aptest-0.5: Delete as result of merger from libxml2_branch.
+	* test/aptest-0.5.spec: Delete as result of merger from libxml2_branch.
+	* test/libaptest: Delete as result of merger from libxml2_branch.
+
+2002-11-24 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/man/*html: Improved documentation and added descriptions
+	   for the accept, reject, sharedir and script tags.
+	* config/aptate.dtd: Improved and added comments as they are used
+	   in the documentation.
+	* config/aptate.xml: Added examples for the accept, reject and
+	   script tags.
+
+2002-11-23 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: improved the code that determines the most 
+	   recent rpm version available in a component.  It is now making the
+	   right conclusion for packages named: 0.6.8rc3-03 or 1.0.0pre1
+	   as well.
+
+2002-11-22 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Added code to control the creation of the
+	   mrlist from the command line => added new argument "rebuild-mrlist"
+	  Adjusted the creation of the apt repository contents list.  The list
+	   has been renamed to contlist.bz2 and is now stored in the "base"
+	   directory.
+
+2002-11-22 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Improved the functionality to find the most recent
+	   rpm.  The list is now called mr.<component> and is stored in the
+	   base directory.
+	* config/aptate.dtd: Renamed attribute list-newest to list-most-recent
+	* server/aptate-config.in: Reflect the changes made in aptate.dtd
+
+2002-11-20 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: added functionality to create a file that holds
+	   the most recent packages in a component.
+	   This file (NEWEST.<component>) stored in $TOPDIR/$D_V_A can be fed
+	   into autoyast2 e.g.
+	* config/aptate.dtd: Add attribute list-newest to component tag
+	* server/aptate-config.in: Add list-newest attribute support
+
+2002-11-19 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: a change to the cache layout.  The rpm name,
+	   version/release and architecture are now stored in seperate fields.
+	   This adds the possibility to create strong searches in the cache,
+	   which could be initiated via the web for example.
+	  Added an apt package contents file.  This file can be used to look
+	   by component a certain rpm (version/release) is being provided.
+	   The file is stored in $TOPDIR/$D_V_A
+
+2002-11-13 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/methods/script.in: Various cleanups.
+
+2002-11-13 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* apt4rpm.spec.in: Use _libdir. 
+	* configure.ac: Bump version to 0.60.4.
+	Add APTATELIBDIR.
+	Add server/methods/Makefile.
+	* config/aptate-convert.in: Add 'script' to <component> sort list.
+	* config/aptate.dtd: Add <script> tag.
+	* server/Makefile.am: Add SUBDIR methods.
+	* server/aptate-config.in: Add <script> support.
+	* server/aptate.in: Add <script> support.
+
+2002-11-13 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* Makefile.am: Remove autom4te*.cache.
+
+2002-11-13 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/methods/Makefile.am: New.
+	* server/methods/script.in: New.
+	* server/methods/.cvsignore: New.
+
+2002-11-03 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* ChangeLog: Remove conflict indicator.
+
+2002-11-03 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate-convert.in: 
+	Convert <component><wget><url> to <component><url>.
+	Introduce sortNodes.
+	Sort <component><*>.
+	* config/aptate.dtd: Fix order for <component><*>.
+	* configure.ac: Bump version to 0.60.3.
+
+2002-11-03 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: a change to the cache layout. A new field has been
+	   added to administer when a package has been added to the repository.
+	   The patch include a cache convertion on the fly.
+
+2002-11-02 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate-convert.in: Convert <opt quiet=""> to <opt verbose="">.
+
+2002-11-02 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate-convert.in: Reflect changes to url_prefix.
+
+2002-10-25 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: added new element <sharedir>
+	* server/aptate-config.in: updated to reflect changes in aptate.dtd
+	* server/aptate.in: On advice of Eberhard Moenkeberg the shared
+	   directory must be located inside the <topdir>/apt directory.
+	   The default location for the shared directory is now
+	   <topdir>/apt/share and with the introduction of the <sharedir> 
+	   element the it can be located anywhere relative to <topdir>.
+
+2002-10-24 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: added code to audit the apt component in case
+	   genpkglist or gensrclist crashes.
+	  Added --debug for convenience
+
+2002-10-23 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: introduce a real field seperator ";" in the
+	   cache instead of just spaces and quotes.
+	  Some clean up fixes
+	  Fixed a bug that aptate not exited, while genpkglist or gensrclist
+	   failed
+
+2002-10-22 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: implemented a better better cache algoritm as
+	   needed for the accept/reject filter mechanism
+
+2002-10-22 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: process an rpm repository only once although it
+	   is specified multiply times (which is possible in case multiple
+	   download mirrors have been specified).
+ 	  Updated writing rpm package information to cache.  A entry is now
+	   only added to the cache if it is unique
+
+2002-10-22 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: ensure that the links are recreated in case a user
+	   requested component rebuild must be performed.  Untill this patch
+	   the cache was only recreated
+
+2002-10-21 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Bump version number to 0.60.2.
+	* apt4rpm.spec.in: Remove Requires: libapt. 
+	Add BuildRequires help2man.
+
+2002-10-21 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Add --enable-docs.
+	* .cvsignore: Add autom4te*.cache.
+	* config/dtd-manual.*.html: New. Ship files instead of building them
+	on-the-fly.
+	* config/Makefile.am: Reflect changes to config/dtd-manual.*.html.
+
+2002-10-21 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: implemented a better mechanism for the accept/reject
+	   functionality
+	* server/aptate-config.in: reflect the changes required by aptate.in
+
+2002-10-20 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: fixed aptate when called with the --check argument
+	  Added a feature to accept and reject rpms (based on name) that are
+	   present on harddisk.  Something similar is provided by wget, but
+	   that is for remote sites.
+	* config/aptate.dtd: added an accept and reject element to support
+	   the accept and reject feature.
+	* server/aptate-config.in: provide support for the accept and reject
+	   feature
+
+2002-10-18 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Introduce function filesize (filesize is an
+	external script under SuSE, but is not available on other OSes).
+
+2002-10-17 Richard Bos <rbos@users.sourceforge.net>
+
+	* client/apt4rpm-1: improved error reporting
+
+2002-10-15 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: fixed an output formatting bug, reported
+	   by Eberhard Moenkeberg.
+	* client/aptrpm-1: added (no)-checksign option
+
+2002-10-14 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: fixed 3 bugs reported by Eberhard Moenkeberg
+	  2 error messages were sent to wrong output stream
+	  find errored in case of an empty directory
+
+2002-10-14 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: changed quiet to verbose
+	* server/aptate-config: reflect changes made in the DTD and renamed
+	   the variable QUIET to VERBOSE
+	* server/aptate.in: changed the QUIET algoritm to VERBOSE, the values
+	   given on the command line are no relative to the configured VERBOSE
+	   value.
+	  An additional VERBOSE value (7) has been added.  If VERBOSE = 7
+	   temporarely directories will not be removed (to ease debugging).
+	  APTATEPL has been updated to be permanent aptate-config
+	* config/man/elt.opt.html: reflect the change from QUIET to VERBOSE
+
+2002-10-13 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: added a check on bzip2.  Aptate will now fail if
+	   bzip2 fails (full harddisk e.g.)
+	   Improved error message in case genpkglist or gensrclist fails
+
+2002-10-12 Richard Bos <rbos@users.sourceforge.net>
+
+	* apt4rpm.spec.in: Ralf rejected the previous update, as wget _can_ be
+	   used by vanilla aptate.
+
+2002-10-11 Richard Bos <rbos@users.sourceforge.net>
+
+	* apt4rpm.spec.in: remove the wget requirement as wget is not always
+	   needed.
+
+2002-10-09 Richard Bos <rbos@users.sourceforge.net>
+
+	* apt4rpm.spec.in: add RH specific information
+
+2002-10-06 Richard Bos <rbos@users.sourceforge.net>
+
+	* client/apt4rpm-1: The gpg check should not occur when removing
+	   packges...
+
+2002-10-06 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Replace ">" with touch for readability.
+	Do not try to copy CACHEFILE if not present (Prevent aptate from
+	complaining if a to-be-aptated directory is empty).
+
+2002-10-05 Richard Bos <rbos@users.sourceforge.net>
+
+	* client/apt4rpm-1: Major change.  Most visible is checking for
+	   gpg signature, which can be dis- or enable via the apt.conf file.
+
+2002-10-05 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate-config.in: Use $global{$key} instead of %global->{$key} to
+	make perl-5.8.0 happy.
+	* config/aptate-convert.in: Use $table{$key} instead of %table->{$key} to
+	make perl-5.8.0 happy.
+
+2002-10-05 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: build-cache(): Initialize RPM_PATCHRPM=.
+	Fix INFONAME extraction for SuSE's *.infos.
+
+2002-10-04 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Work around SuSE-8.1 bash-2.05b problems in
+	build-cache().
+
+2002-10-03 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate-config.in: Remove duplicate action from commandline
+	options.
+
+2002-10-02 Richard Bos <rbos@users.sourceforge.net>
+
+	* client/apt4rpm-1: extending it a little by little
+
+2002-10-01 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/Makefile.am: added EXTRA_DIST: config/man/style.css
+	* client/apt4rpm-1: updated to support multiple kernel package
+	   names
+
+2002-09-30 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/man/elt.sources-list-html.html: added
+	* config/man/elt.sources-list-file.html: added
+	* config/man/elt.sources-list-ftp.html: added
+	* config/man/style.css: added
+
+2002-09-25 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.xml: Removed incorrect DOCTYPE definition
+	* server/Makefile.am: Removed aptate.pl
+
+2002-09-24 Richard Bos <rbos@users.sourceforge.net>
+
+	* configure.ac: Removed aptate.pl and rxp.  Added dtd2html
+	* client/Makefile.am: Added aptrpm-2
+	* config/Makefile.am: Removed rxp and added the creation of the
+	   configuration file manual using the dtd2html.pl script
+	* config/aptate.xml: Update the reference to the configuration file
+	   manual
+
+2002-09-22 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.xml: included an empty tag example
+	* doc/apt4rpm.sgml: removed what is not needed anymore as most of the
+	   config file manual is now created from the dtd and updated where
+	   needed.
+
+2002-09-21 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: Moved <url_prefix><file> to <sources-list-file>
+	   likewise the <http> and the <ftp> tag have been renamed
+	* config/man: Finished the dtd description (hopefully)
+	* config/aptate.xml: reflected the changes made in the dtd
+	* server/aptate-config.in: reflected the changes made in the dtd
+	* server/aptate.in: added some code so it is not required to
+	   specify the protocol in the example url prefix
+
+2002-09-20 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: Moved the html text to seperate files
+	* config/man: directory added, containing the html files documenting
+	   the dtd
+
+2002-09-19 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: moved the location of the cache and the update
+	   directory.  They are now both located under the directory
+	   $TOPDIR/aptate/<distid>.  At the same leve one will now find the
+	   the download log file too.  Please, make sure to move everything
+	   from the update directory to the correct location under the
+	   $TOPDIR/aptate/<distid>/update directory!
+	  Fixed some incorrectly formatted error messages.
+
+2002-09-16 Richard Bos <rbos@users.sourceforge.net>
+	* config/aptate.dtd: extended the documentation.
+	   Introduce a new variable "patch-rpm-component".
+	* server/aptate.in: get rid of the double "SIGN = YES" check
+	  Changed the case of value "YES" to "yes", so it is in relation with
+	   the dtd.
+	  Reflect the changes made to the dtd.
+	* server/aptate-configure.in: Changed the case of value "YES" to "yes",
+	   so it is in relation with the dtd.
+	  Reflect the changes made to the dtd.
+
+2002-09-15 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Remove command line arguments that are probably not
+	   used.  They all have a counter part in the config file.
+	* config/aptate.dtd: extended the documentation.
+
+2002-09-13 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: renamed $TOPDIR/apt/$TMPPREFIX$D_V_A/base to $BASEDIR
+	   the latter was already used in aptate.
+
+2002-09-13 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate-convert.in: Fix minor typo.
+
+2002-09-12 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: prefixed the temp files with their function name
+	   (kind of name spacing)
+	* config/aptate.dtd: introduced attributes old-hashfile and
+	   patch-rpm-string to the element <opt>
+	* server/aptate-config.in: reflect the changes in aptate.dtd
+
+2002-09-12 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate-convert.in:
+	  update_rpm -> update-rpms.
+	  bad-rpms-mode -> bad-rpm-mode.
+	  add_arg -> add-arg.
+	* server/aptate-config.in: bad-rpms-mode -> bad-rpm-mode.
+	* server/aptate-aptate.in: update_rpm -> update-rpms.
+
+2002-09-11 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: aptate now always checks the correctness of
+	   the configuration file. If the file is not correct aptate quits.
+
+2002-09-10 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Process patch rpms before regular rpms.
+
+2002-09-10 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: Continued documenting the dtd
+	  Changed the attribute name update_rpms into update-rpms
+	  Changed <opt><distribution><component><wget><add_arg> to
+	   <opt><distribution><component><wget><add-arg>
+	  Removed the <opt bz2only="..">
+	* config/aptate.xml: Reflect changes made in aptate.dtd
+	* server/aptate.in: Reflect changes made in aptate.dtd
+	* server/aptate-config.in: Reflect changes made in aptate.dtd
+
+2002-09-10 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate-convert.in: Reflect changes to <security> and <opt>*
+	ordering changes.
+
+2002-09-10 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/ChangeLog.aptate.dtd: Fix documentation bugs.
+	* config/aptate.dtd: Require fixed order of element below <opt>.
+
+2002-09-10 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Fixed a bug: the dtd check analysis was wrong
+
+2002-09-09 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Changed the function make_links to add support for
+	   patch - and security rpms.
+	  Remove temporarely files when finished, to prevent errors introduced
+	   by left behind files.
+	  Changed the names of the used variables, so it should be easier to 
+	   follow what is being done.
+	  Some misc. bugs has been fixed
+	* config/aptate.dtd: Removed <opt><security> element
+	  Moved <opt><security><sec_comp> to <opt security-component="..">
+	  Moved <opt><security><sign_hasfile> to <opt sign-repository="..">
+	  Moved <opt><security><signed_packages_only> to
+	   <opt signed_packages_only="..">
+	  Moved <opt><security><gpg_key> to <opt><authorization>
+	  Moved <opt bad-rpms-mode=".."> to <opt bad-rpm-mode="..">
+	  Moved the comment part explaining the changes made to the dtd into
+	   a seperate file, to prevent problems when creating html documentation
+	   from the dtd
+	  Started to document the dtd, in such away that the tool dtd2html
+	   provides a very readable manual
+	* server/aptate-config.in: reflect the changes made in the dtd
+
+2002-09-09 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate-convert.in: Set <distribution id="..">
+	to DVA.
+	* config/aptate.dtd: Cleanup changes.
+
+2002-09-09 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Remove test/Makefile from AC_OUTPUT.
+
+2002-09-09 Richard Bos <rbos@users.sourceforge.net>
+
+	* client/Makefile.am: added rpm-sigchecker
+	* Makefile.am: removed directory test
+
+2002-09-09 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate-convert.in: Fix previous broken attempt to convert 
+	<wget|wget-options><tries|wait> into <opt wget-[tries|wait]>.
+	Convert <wget><cutdirs> into <wget cutdirs="..">.
+
+2002-09-09 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate-convert.in: Convert <wget|wget-options><tries|wait>
+	into <opt wget-[tries|wait]>.
+
+2002-09-09 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate-convert.in: Let <component id=..> be removed.
+	  Add partial support for --verbose.
+
+2002-09-06 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: The continueing story about improving the
+	   cache creation code and apt repository code.
+	  Instead of using temporarely files to write the parsed xml data, use
+	   variables.
+	  Renamed the variables in function build_cache, making it (hopefully)
+	   easier to understand what is happening.  It should therefor be
+	   easier to maintain...
+
+2002-09-04 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Improved the code that creates the apt repository
+           components
+
+2002-09-01 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Add some more code to support the creation
+	   of vitual apt components for patch repositories.
+
+2002-09-01 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Introduced new code to handle patch rpms and
+	   speed up the cache creation.  The remaining question is how to
+	   exactly handle the patch rpms
+	  Some cosmetic cleanup
+
+2002-08-31 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Introduced --rebuild-cache argument.  The argument
+	   accepts all and the components name (comma seperated) as values
+
+2002-08-30 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: introduced <opt bz2only="..">
+	* server/aptate-config.in: updated to reflect the changes in aptate.dtd
+	* server/aptate.in: changed BZIPONLY = YES into BZ2ONLY = yes
+
+2002-08-29 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: introduced <opt bad-rpms-mode="..">
+	* server/aptate-config.in: updated to reflect the changes in aptate.dtd
+	* server/aptate.in: introduced the argument --bad-rpms-mode
+
+2002-08-29 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: make <opt><wget-options><tries> and - <wait>
+	   attributes of <opt> <opt wget-tries=".." wget-wait="..">.
+	   This prevents the empty required element <wget-options>
+	  Made "yes" the default value for <opt>..<component update_rpms="..">
+	* server/aptate-config.in: updated to reflect the changes in aptate.dtd
+	* config/aptate.xml: updated to reflect the changes aptate.dtd
+	* server/aptate.in: fixed 2 bugs
+
+2002-08-28 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: added code for checking the configuration file
+           for syntactical correctness.  The change involves a new
+	   argument --check-config
+	  Removed argument --no-test.  It does not make sense anymore
+	* Commented out the default value assignment for some variables as
+	   they are no assigned via the dtd.
+	* TODO: updated to reflect above change
+	* config/aptate.dtd: make <opt><wget-options><tries> and - <wait>
+	   attributes of <wget-options> so they are initialized by the dtd
+	  Made <topdir> and <wget-options> required elements. 
+	  <wget-options> must be an required element otherwise its attributes
+	   won't be initialized!
+	  Cleaned up the did a little bit (removed redundant spaces)
+	* server/aptate-config.in: updated to reflect the changes aptate.dtd
+
+
+2002-08-27 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: removed the prefix "cache." from the cache
+	   filename.  This means that the cache(s) will be recreated
+	   when the new aptate version will be run for the first time.
+	   The user can move the current cache files to the new name
+	   too of course.
+
+2002-08-27 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: add support for providing multiple distributions
+	   via the --dist-id argument.  The distributions must be comma
+	   seperated, or multiple --dist-id arguments can be used
+	  Put back the  progress marker to print which config file is being used
+	  Define a default value for the PREFIX_FILE variable in case it is
+	    undefined.  The default value used is $TOPDIR/apt
+	  Renamed variable UPD_RPM_COMP to UPD_RPMS_COMP
+	* TODO: removed items that have been done
+
+2002-08-27 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: make <component><wget><cutdirs> an attribute
+	   of element <component><wget>
+	  Made some cosmetic changes
+	* server/aptate-config.in: updated to reflect the changes in aptate.dtd
+	* config/aptate.xml: updated to reflect the changes aptate.dtd
+
+2002-08-26 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: eliminated the id attribute from the
+	   component element
+	* config/aptate.xml: updated to reflect the changes aptate.dtd
+	* server/aptate-config.in: updated to reflect the changes aptate.dtd
+
+2002-08-26 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: add support for distribution ID
+	* config/aptate.xml: updated to reflect the changes aptate.dtd
+	* server/aptate-config.in: updated to reflect the changes in aptate.dtd
+	* server/aptate.in: updated to reflect the changes in aptate.dtd
+	  The CACHEDIR name is now composed with the distribution ID, this
+	   causes that all caches must be rebuild
+
+2002-08-23 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: extended the error handling in case mirroring
+	   fails and the related directory is not created
+	* server/aptate-config: changed to support above mentioned update
+
+2002-08-23 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: fixed a bug in mirror code.  Update needed to
+	   reflect the change made on 2002-08-23
+	  Removed the APTATEPL_OPTS=-v definition as aptate-config does not
+	   support verbose mode
+	  Cosmetic update
+
+2002-08-23 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: remove the element url from the wget element
+	  add attribute method= to the url in the component element
+	* config/aptate.xml: updated to reflect the changes aptate.dtd
+	  added an additional distribution
+	* server/aptate.in: updated to reflect the changes in aptate.dtd
+	* server/aptate-config.in: updated to reflect the changes in aptate.dtd
+
+2002-08-16 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: redirect progress marker message
+	   "Processing $DISTID" to stream 3
+	  Change reference to $MIRRORFILE_FOUND to $CONFIG_FOUND 
+	   in error message
+
+2002-08-16 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Remove TESTPHASE-clause from generating
+	hashfiles.
+
+2002-08-15 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: idented the "for DISTID in $DISTROS" loop
+
+2002-08-15 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate.in: Add release file signature hack.
+	Add --default-key to all calls to gpg --sign.
+
+2002-08-15 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Change version to 0.60.1.
+	* config/aptate.dtd: Remove stray blank line.
+	* config/aptate-convert.in: Minor fixes.
+	  Reflect changes to aptate.dtd.
+	  Fix component processing.
+	* config/aptate.xml: Reflect changes to aptate.dtd.
+	* config/mirror.xml: Add a <continue>no</continue>.
+	* server/aptate-config.in: Minor quoting corrections.
+	  Reflect changes to aptate.dtd.
+	  Add blanks before <add_arg> content.
+	* server/aptate.in: Use "declare" instead of "typeset" (obsolete).
+	  Move BLOAT, FLAT, FOLLOW block in front of main loop.
+	  Minor cleanups.
+	  Fix XPATH quoting.
+
+2002-08-15 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: 
+	  <opt><component><active> -> <opt><component active="..">
+	  <opt><component><update_rpms> -> <opt><component update_rpms="..">
+	  <opt><component><wget><continue> -> <opt><component><wget continue="..">
+
+2002-08-15 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate-config.in: Add --xpath.
+	Remove --distros.
+	Remove VERSION, ARCH, DIST, DISTROS, DISTKEY from --config.
+	Add --dist.
+	Add --query.
+	Fix <cutdirs> processing.
+	Reflect changes above to help().
+	* server/aptate.in: Add multiple distribution support.
+
+2002-08-14 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate-convert.in: Add parse_component to parse_distribution.
+	* server/aptate-config.in: Remove obsolete comment.
+
+2002-08-14 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate-config.in: Remove MIRRORLIST.
+	* server/aptate.in: Remove MIRRORLIST.
+
+2002-08-14 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate-config.in: Add int-casts to WGET_WAIT, WGET_TRIES
+	and <cutdirs> processing.
+
+2002-08-14 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate.dtd: Document changes from previous patch.
+	  Remove stray <hashfile_signature>.
+
+2002-08-14 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Switch version to 0.60.
+	* config/aptate.dtd: Convert
+	  <opt><security><sec_comp> -> <opt><security sec_comp="..">
+	  <opt><security><hashfile_signature> -> <opt><security hashfile_signature="..">
+	  <opt><security><signed_pkgs_only> -> <opt><security signed_pkgs_only="..">
+	* config/aptate-convert.in: Reflect changes to aptate.dtd.
+	* server/aptate-config.in: Ditto.
+	* config/aptate.xml: Ditto. 
+
+2002-08-08 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: Change the method for looking up the
+	 configuration file.
+	Reflect that the distribution (mirror) information is now in the 
+	 configuration file.
+	Removed the --mirror-file argument
+
+2002-08-04 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate-config.in: Change various quotings.
+	Re-add &version and &help.
+	Fix reference to wrong node in content_yesno.
+	Use content_yesno to retrieve 'active'.
+
+2002-08-03 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/.cvsignore: Add aptate-config.
+	* config/.cvsignore: Add aptate-convert.
+
+2002-08-03 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	Start libxml2_branch:
+	* server/aptate-config.in: New.
+	* server/Makefile.am: Add config/aptate-config.in.
+	* configure.ac: Version 0.61. Add config/aptate-config.
+	* apt4rpm.spec.in: Require XML::LibXML, drop rxp and XML::Simple.
+	* server/aptate.in: Add APTATEPL.
+	* server/aptate.pl.in: Quote @VERSION@ as a string.
+
+2002-08-02 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate-convert.in: 
+	Change <test> removal to also remove comments.
+	Add removal of <security><mode> and parse_security().
+	* config/aptate.conf.xml: Add <opt><security><mode> node.
+	* config/aptate.dtd: Document having removed <security><mode>.
+	* server/aptate.pl.in: Remove <opt><security><mode> support.
+
+2002-08-02 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/Makefile.am: Per Richard's request, remove file://-scheme
+	because xemacs and nsgmls are not able to process it.
+	* config/aptate-convert.in: Ditto.
+
+2002-08-02 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate.conf.dtd: Remove.
+	* config/mirrorlist.dtd: Remove.
+
+2002-08-02 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate.conf.xml: Add <test>.
+	* server/aptate.pl.in: Remove <test>.
+	* config/aptate-convert.in: Let <test> be removed.
+	* config/aptate.dtd: Document having removed <test>.
+
+2002-07-31 Richard Bos <rbos@users.sourceforge.net>
+
+	* config/aptate.dtd: abandon support for mirrorfiles
+	* server/aptate.in: Cosmetic removal of unnecessary spaces
+	* server/aptate.pl.in: Cosmetic removal of unnecessary spaces
+
+2002-07-31 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Bump VERSION to 0.55.3.
+	* apt4rpm.spec.in: Remove mirrorlist.
+	* config/Makefile.am: 
+	  Remove mirrorlist, aptate.conf.xml, mirrorlist.dtd.
+	  Keep mirror.xml and aptate.conf.xml as EXTRA_DIST.
+	  Generate default aptate.conf from aptate.xml.
+	* config/aptate.dtd: Change syntax:
+	  Abandon <components> (mirrorlist files)
+	* config/aptate-convert.in: 
+	  Reflect changes to aptate.dtd.
+	  Let --merge be the default. 
+	* config/aptate.conf.xml: Add some obsolete tags.
+	  Mark as obsolete. Use local mirror.xml in <mirrorlist>
+	* server/aptate.pl.in: Reflect changes to aptate.dtd.
+
+2002-07-31 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Bump VERSION to 0.55.2.
+	* config/Makefile.am: Install aptate-convert.
+	* config/aptate.dtd: Change syntax:
+	  <opt><distribution><components><component> -> 
+	    <opt><distribution><component>
+	* config/aptate-convert.in: 
+	  Reflect changes to aptate.dtd.
+	* config/aptate.xml: Reflect changes to aptate.dtd.
+	* server/aptate.pl.in: Reflect changes to aptate.dtd.
+
+2002-07-30 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Fix APTATEDATADIR. Bump VERSION to 0.55.1.
+	* config/Makefile.am: Add check-convert.
+	* config/aptate.dtd: Change syntax:
+	  <opt><bloat> -> <opt bloat="..">
+	  <opt><update_rpms> -> <opt update_rpms=".."> 
+	  <opt><quiet> -> <opt quiet="..">
+	  <opt><flat> -> <opt flat="..">
+	  <opt><follow> -> <opt follow="..">
+	  move <distribution>+ to the end of an <opt> block.
+	* config/aptate-convert.in: Add --purge, --expand.
+	  Reflect changes to aptate.dtd.
+	* config/aptate.conf.xml: Reflect changes to aptate.dtd.
+	* config/aptate.xml: Reflect changes to aptate.dtd.
+	* server/aptate.pl.in: Add --dist.
+	* server/aptate.in: Use --dist in call to aptate.pl.
+
+2002-07-29 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: altered the cache code for nosrc rpms.  The rpm
+	is now queried for its name instead of just using the filename.
+
+2002-07-29 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Add support for xmllint.
+	* config/Makefile.am: Add aptate.xml-check using xmllint.
+
+2002-07-28 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Fix obvious bug in handling nosrc.rpms (One \n
+        too much). Fix minor typo in comment.
+
+2002-07-26 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* misc/apt.spec: Update to apt-0.5.4-cnc3. 
+	Set Release: 0.
+	* server/aptate.in: Handle nosrc.rpms as src-rpms.
+
+2002-07-25 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: fixed the new release file code to generate the
+	correct formatted release file
+
+2002-07-24 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* misc/apt.spec: New.
+	* misc/vendors.list: New.
+
+2002-07-17 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate-convert.in: New.
+	* config/Makefile.am: Add aptate-convert.in.
+	* configure.ac: Add config/aptate-convert.
+	Add APTATEDATADIR.
+
+2002-07-16 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: change --no... arguments into --no-, impacted
+	 arguments are:
+	 --no-bloat
+	 --no-test
+	 --no-mk-sec-comp
+	 --no-follow
+	 --no-flat
+	 --no-signed-pkgs-only
+	 --no-update-rpms
+
+2002-07-15 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: added the initial code to support the global
+	 release file
+	Change variable name BAD_RPM into BAD_RPM_MODE and altered 
+	 BAD_RPM_MODE ignore into report_only
+
+2002-07-14 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.in: Remove APTCACHEDIR.
+	* apt4rpm.spec.in: BuildArch: noarch.
+
+2002-07-12 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Add APTATECONFDIR.
+	Set version to 0.55.
+	* server/aptatemod.in: Use APTATECONFDIR instead of apt-config.
+	* server/aptate.in: Use APTATECONDIR instead of apt-config.
+
+2002-07-11 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.in: added the initial code to ignore or rename bad rpms
+	 (on request of Eberhard Moenkeberg)
+	Reset the "trap" when apt_exit_on_trap is called.  Preventing the
+	 function to be called multiple times
+
+2002-07-10 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/.cvsignore: Add aptate, aptate.pl, aptatemod.
+	* server/aptatemod: Remove.
+	* server/aptatemod.in: Remove cvs-tags inherited from aptatemod.
+
+2002-07-10 Richard Bos <rbos@users.sourceforge.net>
+
+	* doc/aptate.sgml: Added a missing end tag
+	(bug reported by Ramprasad A Padmanabhan)
+
+2002-07-10 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/Makefile.am: Take out aptate aptatemod aptate.pl from 
+	EXTRA_DIST.
+	* server/aptate.in: Use PACKAGE_VERSION to set up PRGVRSN.
+	Use PACKAGE_BUGREPORT to set up bugreport email address.
+	Use #! /bin/sh instead of #!/bin/sh.
+	* server/aptate.pl.in: Use PACKAGE_VERSION to set up $VERSION.
+	Add $BUGS to take bugreport email addresss.
+	Use PACKAGE_BUGREPORT to set up $BUGS.
+	Use #! @PERL@ instead of #!/usr/bin/perl.
+	* server/aptatemod.in: Use PACKAGE_VERSION to set up $VERSN.
+	Use #! /bin/sh instead of #!/bin/sh
+
+2002-07-10 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Let server/aptate.pl be autoconf generated.
+	* server/aptate: Remove.
+	* server/aptate.pl: Remove.
+	* server/aptate.pl.in: Remove cvs-tags from aptate.pl.
+	* server/aptate.in: Remove cvs-tags from aptate.
+
+2002-07-06 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* configure.ac: Let server/aptate and server/aptatemod be autoconf
+	generated. 
+
+2002-06-21 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.pl: Cosmetical changes. 
+
+2002-06-20 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate.dtd: <opt><mirrorlist> 
+	-> <opt><distribution><mirrorlist>
+	 | <opt><distribution><components>
+	* config/aptate.conf.xml: Reflect changes to aptate.dtd.
+	* config/aptate.xml: Reflect changes to aptate.dtd.
+	* doc/apt4rpm.sgml: Reflect changes to aptate.dtd.
+	* server/aptate.pl: Reflect changes to aptate.dtd. Return infile if
+	<components> is found.
+
+2002-06-20 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* config/aptate.dtd: Elmiminate <directories>.
+	* server/aptate.pl: Eliminate <directories>.
+	* doc/aptate.sgml: Elimiate <directories>.
+	* config/aptate.xml: Reflect changes above.
+	* config/aptate.conf.xml: Reflect changes above.
+
+2002-06-18 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.x: refer to /usr/share/doc/packages/apt4rpm
+	* server/aptate.pl: Combined the SRPMDIR="../" and SRPMDIR="/.."
+	Fixed the storage of a test noflat repository; the SRPMS were not stored
+	The note that the repositoryi structure has changed, is now reported 
+	 only once after all components have been processed.
+
+2002-06-18 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate.pl: integrated genbasedir into aptate
+	Made the header in the sources.list examples files better for usage
+	 at web pages and such.
+        Formatting -> changed tabs in the right number of [:space:]
+	Improved the cache code; the code now deals correctly with double
+	 or multiple entries in the cache
+	Removed a bug that ignored the real rpm "patch.rpm"
+
+2002-06-13 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.pl: Add root-nodes to XML::Simple parsers.
+	Use consistent XMLin::Simple parsers options for mirror and config.
+	Allow <opt> and <components> as root-nodes for config.
+	New program options using Getopt::Long.
+	Add xml-validation by using rxp.
+	Reflect changes to <excludedir>.
+	* server/aptate: Reflect changes to aptate.pl's options.
+	* config/aptate.xml: New.
+	Reflect changes to <excludedir>.
+	* config/Makefile.am: Reflect having added aptate.xml.
+	Add aptate.xml to "make check".
+	* config/aptate.dtd: Make <mirrorlist> and <components> mutually
+	exclusive.
+	Remove <excludedirs> and <dirs>. Add <excludedir>.
+	* config/mirror.xml: Reflect changes to <excludedir>.
+	* apt4rpm.spec.in: Add Requires: rxp.
+
+2002-06-12 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.pl: Use <wget-options>.
+	* config/aptate.conf.xml: Use aptate.dtd.
+	* config/mirror.xml: Use aptate.dtd.
+	* config/Makefile.am: Add and use aptate.dtd.
+	* doc/Makefile.am: Use aptate.dtd.
+	* config/aptate.dtd: New.
+	* client/Makefile.am: New.
+	* client/cvsignore: New.
+	* configure.ac: Add client/Makefile.
+	* Makefile.am: Add client/.
+
+2002-06-12 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate: cleaned up the cache audit code
+	* client/README: New.
+	* client/apt: New.
+	* client/aptrpm-1: New.
+
+2002-06-11 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* bootstrap: check for help2man.
+	* server/aptate.8: Remove from CVS.
+	* server/.cvsignore: Add aptate.8.
+	* README.cvs: Reflect changes wrt. help2man.
+	* doc/Makefile.am: Let aptate.conf.sgml depend upon aptate.conf.xml.
+	Let mirrorlist.sgml depend upon mirror.xml.
+
+2002-06-10 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate: prevent that aptate hangs in case the search
+	directory is empty or when the security cache is empty
+
+2002-06-10 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.x: Add myself to Authors. 
+	Change formating of the Authors section.
+
+2002-06-09 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate: Minor spelling fixes.
+	* .cvsignore: Add INSTALL.
+
+2002-06-08 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate: Improved the cache audit, it did not check for the
+        existence of the last directory but the first
+
+2002-06-07 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate: Added progress markers
+	Moved the remark about bad rpms into the exit function 
+	The variables MIRRORFILES and CONFIG_FILES are using now apt-config
+         to determine the location of their apt configuration directory
+	The variable APTCACHEDIR uses apt-config to determine the location of
+	 of the apt cache directory
+
+2002-06-06 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate: The release.* files are now always refreshed and 
+	reflect when aptate has run
+
+2002-06-06 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* NEWS: Populate with contents of ChangeLog.
+	* ChangeLog: Reformat for GNU standards.
+
+2002-06-05 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.pl: Use local vars instead of undefining local vars.
+	* Makefile.am: Change SUBDIRS order.
+	* config/aptate.conf.dtd: New.
+	* config/aptate.conf: Remove.
+	* config/aptate.conf.xml: Renamed from aptate.conf.
+	* config/Makefile.am: Reflect changes above.
+	* doc/Makefile.am: Likewise.
+
+2002-06-04 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.pl: Minor cleanups.
+	* config/mirrorlist.dtd: New.
+	* config/Makefile.am: Reflect having added mirrorlist.dtd.
+	* config/mirror.xml: Ditto.
+	* apt4rpm.spec.in: Ditto.
+	* configure.ac: Add support for rxp.
+
+2002-05-29 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* misc/apt-cvs.spec: Remove (Obsolete).
+	* misc/apt4rpm.spec: Remove (Obsolete).
+
+2002-05-28 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate: Added support for switching from flat to noflat apt
+	repositories and vice versa.
+
+2002-05-28 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* LICENSE: Remove.
+	* README.cvs: New.
+	* configure.ac: New.
+	* bootstrap: New.
+	* config/Makefile.am: New.
+	* doc/Makefile.am: New.
+	* server/Makefile.am: New.
+	* test/Makefile.am: New.
+	* Makefile.am: New.
+	* config/.cvsignore: New.
+	* doc/.cvsignore: New.
+	* doc/example/.cvsignore: New.
+	* server/.cvsignore: New.
+	* test/.cvsignore: New.
+	* .cvsignore: New.
+	* apt4rpm.spec.in: New.
+	* Makefile: Remove.
+	* doc/Makefile: Remove.
+	* AUTHORS: Add myself.
+	* README: New.
+	* NEWS: New.
+	* ChangeLog: Rename from changelog.
+	* changelog: Remove.
+
+2002-05-27 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate.8: New.
+	* server/aptate.x: New.
+	* server/aptate: Remove -H, --Help.
+	Let --help print long help to stdout.
+	Reflect changes to -h.
+
+2002-05-26 Marcel Ritter <sfmarcel@users.sourceforge.net>
+
+	* server/aptate: Fixed problem with signed repositories.
+
+2002-05-24 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* Fix aptate.conf's <mirrorlist>.
+
+2002-05-23 Ralf Corsepius <corsepiu@users.sourceforge.net>
+
+	* server/aptate: Add flat repository support.
+	* server/aptate.pl: Add flat repository support.
+
+2002-05-20 Richard Bos <rbos@users.sourceforge.net>
+
+	* server/aptate: Corrected a bug, if a rpm disappeared from the rpm
+	repository an error was reported by "mv".
+	* Code cleanup.
+
+2002-05-19 Richard Bos <rbos@users.sourceforge.net>
+
+	* Release Version 0.20.
+	* Bad rpms are now marked as bad rpms
+	* Introduced an additional output stream, dividing the progress marker's
+	stream (3) into 2 stream (being 3 and 4).  Output stream 4 contains now
+	the ANSI chars and output stream 3 provides clean status information
+	* Added a cache consistency check.  The check will remove
+        cache entries that contain not existing directories.
+
+2002-05-18 Richard Bos <rbos@users.sourceforge.net>
+
+	* Make the "old" left behind (test) APT repository unreadable for
+	group and others.
+
+2002-05-18 Richard Bos <rbos@users.sourceforge.net>
+
+	* Exit aptate and provide an error report, in case genbasedir does not
+	finish successfully.
+
+2002-05-17 Richard Bos <rbos@users.sourceforge.net>
+
+	* Do not change the apt component information in in rpm repository has
+	not changed. This has advantages for the server as well as the client.
+	Especially the client will be happy as it prevents unnecessary
+	downloads.  The latter is appreciated by the server (bandwidth savings)
+	as well of course. The apt server will need to do less processing
+        as well :))  As the apt repository component information will be kept
+	and regenerated.
+
+2002-05-16 Richard Bos <rbos@users.sourceforge.net>
+
+ 	* Beautified the output during the mirror and link action.
+
+2002-05-09 Marcel Ritter <sfmarcel@users.sourceforge.net>
+
+	* Release Version 0.1.4.
+ 	* Fix a problem introduced by SuSE, as SuSE is now releasing patch
+	rpms. These have different dependencies compared to the "real" rpms.
+
+2002-05-09 Richard Bos <rbos@users.sourceforge.net>
+
+	* Separated download and linking action.  First all downloading is
+	done, and after that the linking is performed.
+
+2002-04-23 Richard Bos <rbos@users.sourceforge.net>
+
+	* Release version 0.1.3.
+	* Fix a problem when only 1 dir is being specified as exclude
+	directory.
+
+2002-04-20 Richard Bos <rbos@users.sourceforge.net>
+
+	* Release version 0.1.2.
+	* Removed references to aptatemod in error messages as aptatemod is in
+	a bad shape.
+
+2002-04-20 Richard Bos <rbos@users.sourceforge.net>
+
+ 	* server/aptate.pl: Fix incorrectly parsing when only 1 component is
+	configured in the mirrorlistfile (Ralf Corsepius).
+
+2002-04-19 Richard Bos <rbos@users.sourceforge.net>
+
+	* Fix inconsistent argument signed_pkgs_only into signed-pkgs-only
+	(Thomas Vander Stichele).
+
+2002-03-24 Richard Bos <rbos@users.sourceforge.net>
+
+ 	* Fix incorrect file and http example sources.list files
+	(Eberhard Moenkeberg).
+
+2002-03-10 Richard Bos <rbos@users.sourceforge.net>
+
+	* Release version 0.1.1.
+ 	* Fix <cutdirs>0</cutdirs> in the mirrorfile.
+
+2002-03-09 Richard Bos <rbos@users.sourceforge.net>
+	* Added Nvidia example to the mirrorfile.

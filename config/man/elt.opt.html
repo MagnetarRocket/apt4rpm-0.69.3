@@ -1,0 +1,172 @@
+<p>An explanation of the attributes belonging to the element "opt".
+</p
+
+<p>
+ <table class='synopsis' border='1' cellspacing='0' cellpadding='4'>
+  <thead>
+   <th>variable</th>
+   <th>explanation</th>
+   <th>cla</th>
+  </thead>
+  <tr>
+   <td valign=top>bad-rpm-mode</td>
+   <td>The action to be performed on a bad rpm.  A bad rpm is an rpm that
+    fails the command "rpm -q".  There are 2 treatments; report-only 
+    and rename.
+    <ul>
+     <li>in <b>report-only</b> mode aptate, as it says, will inform you only.
+      So manual action is required, to get the problem resolved to prevent
+      the warning being reported over and over again.
+     </li>
+     <li>in <b>rename</b> mode aptate will move the bad rpm away.  This
+      prevents that the problem is reported over and over again.  However,
+      if the problem persist, because the rpm is rsync-ed over and over again
+      it may be that the rpm provided by your rpm source is corrupt.  The only
+      way to solve this problem is at the source: contact the rpm provider.
+     </li>
+    </ul>
+    <p>In both cases the rpm will be excluded from the apt repository.
+    </p>
+   </td>
+   <td align=center valign=top>yes</td>
+  </tr>
+  <tr>
+   <td valign=top>bloat</td>
+   <td>Provide apt databases with extensive information.  It's adviced to
+    activate this on rpm systems.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>flat</td>
+   <td>The location of source rpm components.  In a flat repository (flat=yes)
+    the source rpms are located at the same level as the binary rpms.  In non
+    flat (flat=no) repositories the source rpms are stored 1 directory higher
+    than the binary rpms.
+    <br><br>
+    Aptate has been optimized for flat repositories.  Aptate has no problems
+    creating a non flat apt repository that holds only 1 archive.  The result
+    in case the non flat repository holds more than 1 archive depends on the
+    way the source rpms are organized in the rpm (not apt) repository.
+    The result may be good may be bad.
+    <br><br>
+    Anyway, a flat repository seems the right choice for most rpm based
+    distributions.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>follow</td>
+   <td>Follow symlinks when searching rpms in the rpm repository.  This is a
+    dangerous option as the links can lead outside the apt or rpm repository.
+    The apt repository maintainer must ensure this will not happen and must
+    ensure that no endless loops exist in the rpm repository if directories or
+    files are symlinked.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>old-hashfile</td>
+   <td>Provide the apt-rpm version 0.3.19 hashfile for backwards compatibility.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>patch-rpm-component</td>
+   <td>If yes, aptate will look for patch rpms and if found will make a
+    seperate apt component holding patch rpms only, next to the component
+    being processed.  Doing so gives the possibility to assign patch
+    rpms a higher priority than regular binary rpms or to exclude them.  The
+    component gets the name of the component being processed suffixed with
+    a "patch-rpm-string".  The latter is explained as a seperate item.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>patch-rpm-string</td>
+   <td>The suffix that will be added to the component name in case
+    the component provides patch rpms.  It is a matter of taste:
+    <i>patchrpms</i> says more than <i>prpm</i>, but hopefully prpms will be
+    as common as srpms...  So, the component for patch rpms will be either
+    called RPMS.&lt;component name>-prpm, or RPMS.&lt;component name>-patchrpm.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>security-component</td>
+   <td>If yes, aptate makes an apt repository component providing rpms
+    that have been released to solve security problems only.
+    There are many reasons why it's good to have an apt component providing
+    only security related rpms.  This can be because the user is behind a
+    slow connection, wants to maintain to stable system, etc.
+    <br>
+    This functionality works now only for SuSE, however it is possible to
+    extend aptate's functionality to get other distributions supported.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>signed-pkgs-only</td>
+   <td>If yes, aptate will only import rpms into the apt repository, that
+    pass the rpm (gpg) signature check.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>sign-repository</td>
+   <td>If yes, aptate will sign the aptate repository with the name specified
+    in the authorization element.  This is usefull in case the apt repository
+    is mirrored and you want to prevent others to sneak in incorrect rpms
+    into your mirrored repository.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>update-rpms</td>
+   <td>If activated new rpm packages will be downloaded from the download
+    server(s) as specified in the component parts of the configuration file.
+   </td>
+   <td align=center valign=top>yes</td>
+  </tr>
+  <tr>
+   <td valign=top>verbose</td>
+   <td>The verboseness of aptate.
+    <ul>
+     <li>0: no output (but a few error messages)
+     </li>
+     <li>1: all error messages
+     </li>
+     <li>2: idem 1, plus progress messages
+     </li>
+     <li>3: idem 2, plus progress counters
+     </li>
+     <li>4: idem 3, plus which config file is being read
+     </li>
+     <li>5: display all messages (debug mode)
+     </li>
+     <li>6: idem 5, but temporarely directories and files are not being removed
+     </li>
+    </ul>
+   </td>
+   <td align=center valign=top>yes</td>
+  </tr>
+  <tr>
+   <td valign=top>wget-tries</td>
+   <td>This is a wget option.  The wget man states:<br>
+    Set number of retries to number.  Specify 0 for infinite retrying.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+  <tr>
+   <td valign=top>wget-wait</td>
+   <td>This is a wget option.  The wget man states:<br>
+    Wait the specified number of seconds between the retrievals.  Use of this
+    option is recommended, as it lightens the server load by making the
+    requests less frequent.  More about the wget wait option in the wget
+    manual.
+   </td>
+   <td align=center valign=top>no</td>
+  </tr>
+ <table>
+ <p><small>cla: command line argument</small></p>
+</p>

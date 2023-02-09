@@ -1,0 +1,411 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title></title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div></div><div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="article"><a href="#id2391918">apt4rpm</a></span></dt><dd><dl><dt><span class="section"><a href="#id2494760"></a></span></dt><dt><span class="section"><a href="#id2494727">Introduction</a></span></dt><dt><span class="section"><a href="#id2435536">Setup</a></span></dt><dd><dl><dt><span class="section"><a href="#id2435542">Server</a></span></dt><dt><span class="section"><a href="#id2434657">Client</a></span></dt><dt><span class="section"><a href="#id2433740">Next steps</a></span></dt></dl></dd><dt><span class="section"><a href="#id2433778">Crypto</a></span></dt><dd><dl><dt><span class="section"><a href="#id2433849">Server</a></span></dt><dt><span class="section"><a href="#id2434041">Client</a></span></dt></dl></dd><dt><span class="section"><a href="#id2434059">Aptate configuration</a></span></dt><dt><span class="section"><a href="#id2434095">Usage</a></span></dt><dt><span class="section"><a href="#id2434150">Automatic Package Upgrading</a></span></dt><dt><span class="section"><a href="#id2434163">Feedback</a></span></dt><dt><span class="section"><a href="#id2434198">Client Configuration Examples</a></span></dt><dd><dl><dt><span class="section"><a href="#id2434204">Client</a></span></dt></dl></dd><dt><span class="section"><a href="#id2495139">License</a></span></dt></dl></dd></dl></div><div class="list-of-examples"><p><b>List of Examples</b></p><dl><dt>1. <a href="#example-aptate.minimal.xml">Minimal aptate configuration file</a></dt><dt>2. <a href="#example-aptate.xml">A possible aptate configuration file</a></dt><dt>3. <a href="#example-sources.list">sources.list</a></dt><dt>4. <a href="#example-vendors.list">vendors.list</a></dt></dl></div><div class="article" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="id2391918"></a>apt4rpm</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Richard</span> <span class="surname">Bos</span></h3></div></div></div><div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id2494760"></a></span></dt><dt><span class="section"><a href="#id2494727">Introduction</a></span></dt><dt><span class="section"><a href="#id2435536">Setup</a></span></dt><dd><dl><dt><span class="section"><a href="#id2435542">Server</a></span></dt><dt><span class="section"><a href="#id2434657">Client</a></span></dt><dt><span class="section"><a href="#id2433740">Next steps</a></span></dt></dl></dd><dt><span class="section"><a href="#id2433778">Crypto</a></span></dt><dd><dl><dt><span class="section"><a href="#id2433849">Server</a></span></dt><dt><span class="section"><a href="#id2434041">Client</a></span></dt></dl></dd><dt><span class="section"><a href="#id2434059">Aptate configuration</a></span></dt><dt><span class="section"><a href="#id2434095">Usage</a></span></dt><dt><span class="section"><a href="#id2434150">Automatic Package Upgrading</a></span></dt><dt><span class="section"><a href="#id2434163">Feedback</a></span></dt><dt><span class="section"><a href="#id2434198">Client Configuration Examples</a></span></dt><dd><dl><dt><span class="section"><a href="#id2434204">Client</a></span></dt></dl></dd><dt><span class="section"><a href="#id2495139">License</a></span></dt></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2494760"></a></h2></div><div><p class="copyright">Copyright © 2001, 2002, 2003 Marcel Ritter and Richard Bos</p></div></div><div></div></div><p><a href="http://apt4rpm.sourceforge.net" target="_top">homepage</a></p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2494727"></a>Introduction</h2></div></div><div></div></div><p>The Advanced Package Tool (APT) has been available for some time now. 
+    <a href="http://www.debian.org" target="_top">Debian</a> based Linux distributions
+    used it for several years, but the RedHat Package Manager 
+    <a href="http://distro.conectiva.com.br/projetos/42/" target="_top">(rpm) based
+    version</a> is still mostly unknown. It was done by 
+    <a href="http://www.conectiva.com" target="_top">Conectiva S.A.</a>, a Brasilian
+    linux distributor.  Though developed for their own distribution it works 
+    with minor/no modifications with most other distributions (currently 
+    tested with <a href="http://www.suse.com" target="_top">SuSE</a> and
+    <a href="http://www.redhat.com" target="_top">RedHat</a>). 
+   </p><p>To be able to use apt, an apt repository is needed.  Conectiva users 
+    are lucky in this respect as Conectiva provides a public apt repository
+    which can be reached via the internet.  Users of other rpm based
+    distributions are less lucky, as they need to provide an apt repository
+    themselves.  Here is were apt4rpm jumps in.
+    The apt4rpm package creates an apt repository of an 
+    ordinary rpm repository.  With other words the apt client software
+    is provided by the apt-rpm project of Conectiva, the server side software
+    is being streamlined by the apt4rpm package.  The main application in the
+    latter is <span class="application">aptate</span> which is a contamination of
+    the words <span class="emphasis"><em>apt</em></span> and upd<span class="emphasis"><em>ate</em></span>.
+   </p><p>A list of public apt repositories can be found at the 
+    <a href="http://apt4rpm.sourceforge.net" target="_top">apt4rpm</a> website.
+   </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2435536"></a>Setup</h2></div></div><div></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2435542"></a>Server</h3></div></div><div></div></div><h4><a name="id2435548"></a>Install apt rpm packages</h4><p>Make sure you have the rpm packages <span class="emphasis"><em>apt</em></span>, 
+     and it's dependend packages (perl-)XML-LibXML, (perl-)XML-LibXML-Common,
+     (perl-)XML-NamespaceSupport, (perl-)XML-SAX.  Depending on the package
+     distributor you may need apt-server.
+
+     If you do not have these packages you can download them from the
+     download page of the 
+     <a href="http://apt4rpm.sourceforge.net/" target="_top">apt4rpm</a> website or
+     just create them by using the .spec files (see the comments at the top
+     of the .spec files for more information).
+    </p><h4><a name="id2482315"></a>Build with:</h4><p><span><b class="command">rpmbuild -ba apt.spec</b></span></p><h4><a name="id2482326"></a>Install with:</h4><p><span><b class="command">rpm -Uvh apt apt-libs apt-server apt4rpm</b></span></p><p>(short form here - use the created filenames with version number).
+     Repeat the same command sequence for the XML perl modules, if needed.
+    </p><h4><a name="id2482341"></a>Configuration setup</h4><p>Change the configuration file aptate.conf to your needs. 
+     It can be stored in the directories:
+     <tt class="filename">/etc/apt/</tt> or
+     <tt class="filename">$HOME/.aptate/</tt>.
+    </p><p>Aptate.conf, or any other name in which case the argument
+     --config-file must be used, holds the configuration information needed to
+     run aptate.  The configuration file is xml formatted and it follows 
+     the rules layed down in file aptate.dtd.
+     The information ranges from defining the top directory up to describing
+     a linux distribution.
+    </p><p>The configuration file defines a list of sources where RPM packages
+     can be found.
+     Currently only local directories and FTP servers can be used.
+     Two example configuration files,
+     <a href="#example-aptate.minimal.xml" title="Example 1. Minimal aptate configuration file">Example 1, &#8220;Minimal aptate configuration file&#8221;</a> and 
+     <a href="#example-aptate.xml" title="Example 2. A possible aptate configuration file">Example 2, &#8220;A possible aptate configuration file&#8221;</a> are included in this manual,
+    </p><p>If you configured everything to your needs you can start creating the 
+     needed databases by running <span class="application">aptate</span>. Quite some
+     effort have been spend to add error messages - so you should get hints if
+     something goes wrong. <span class="application">Aptate</span> will also create 
+     example configuration files for the client machine (sources.list and 
+     vendors.list) that need to be copied to the clients config directory
+     <tt class="filename"><a name="directory"></a>/etc/apt/</tt>.
+     <a href="#example-sources.list" title="Example 3. sources.list">Example 3, &#8220;sources.list&#8221;</a> shows a sources.list
+     file and an example of the vendors.list file is shown in
+     <a href="#example-vendors.list" title="Example 4. vendors.list">Example 4, &#8220;vendors.list&#8221;</a>.
+    </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2434657"></a>Client</h3></div></div><div></div></div><h4><a name="id2434663"></a>Install APT RPM packages</h4><p>The Client requires the package <span class="emphasis"><em>apt</em></span> and
+     depending on the distributor <span class="emphasis"><em>apt-libs</em></span> as well.
+    </p><h4><a name="id2434677"></a>Configure setup</h4><p>Get the configuration files (sources.list and eventually 
+     vendors.list) and install them in 
+     <tt class="filename">/etc/apt</tt>.
+     If you want to use authentication with <span class="application">apt</span> - 
+     make sure you have all needed GPG/PGP keys installed on the server/client.
+    </p><h4><a name="id2434702"></a>First steps</h4><p>To check if your setup is correct, try: 
+     <span><b class="command">apt-get update</b></span>
+    </p><p>
+     This will copy the databases to your local harddisk (if
+     everything is ok) or complain (mainly if sources.list is not correct).
+    </p><p>You should check your currently installed packages status with:
+     <span><b class="command">apt-get check</b></span>
+    </p><p>
+     This will make sure that you have no unresolved dependencies between
+     installed packages. If it complains, that this is not the case try:
+     <span><b class="command">apt-get -f install</b></span>
+    </p><p>
+     which will install all packages, that are needed by already
+     installed packages.
+    </p><p>If all this went ok, try: <span><b class="command">apt-get -s upgrade</b></span>
+    </p><p>to see if there are any new packages available.  The -s argument
+     tells apt-get to simulate the command (nothing will be installed).
+     </p><p>There is a second mode for upgrade called 
+     <span class="emphasis"><em>dist-upgrade</em></span> In contrast to 
+     <span class="emphasis"><em>upgrade</em></span> this will also install newer 
+     packages that require the removal or installation of extra packages.
+    </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2433740"></a>Next steps</h3></div></div><div></div></div><p>There is much to tell about apt, how it can be used and how
+         apt can be tuned according your desires.  However, this is beyond the
+         scope of this manual.  At the
+         <a href="http://apt4rpm.sourceforge.net" target="_top">apt4rpm</a>
+         website a link called related
+         matrial can be found.  The page behind that link holds many references
+         to apt howto's, manuals, etc.  This page is worth to be visited,
+         especially when you're having questions, are stuck and the like!
+         Or start reading the apt man pages 
+         (<span><b class="command">man apt-get</b></span> or <span><b class="command">apropos apt</b></span>).
+        </p></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2433778"></a>Crypto</h2></div></div><div></div></div><p>Just a very few words about public key cryptography (for indepth 
+    information you should read the GPG-HOWTO).
+   </p><p>Public key crypto systems are based on a key pair consisting of a 
+    secret and a public key. The secret key can be used by its owner to 
+    sign or encrypt files, while the public key can be used to prove the 
+    origin of files.
+   </p><p>This section is a short introduction in the GnuPG features you
+    might need with apt4rpm.
+   </p><p>This is especially true if you use the
+    <i class="parameter"><tt>signed-pkgs-only</tt></i> which means only
+     signed packages are used for updates. You need to have the corresponding
+     public key on your key ring to validate those packages.
+   </p><p>Most distributions have the vendor key attached by default to root's
+    key ring. However aptate supports all operations to be done by a non-root
+    user (for security reasons), and this one is likely to start with an empty
+    key ring (which might cause all packages to be marked "insecure" and to
+    be dropped). 
+   </p><div class="important" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Important</h3><p>If you get this behaviour, make sure to check your key ring!</p></div><p>For further information visit the
+    <a href="http://www.gnupg.org" target="_top">GPG</a> homepage and the
+    <a href="http://apt4rpm.sourceforge.net/ref.html" target="_top">related matrial</a>
+    webpage at the apt4rpm website.  Here you find at least 1 reference to
+    "Signing rpms with gpg".
+   </p><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2433849"></a>Server</h3></div></div><div></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2433854"></a>Signed repositories</h4></div></div><div></div></div><p>A signed repository is required if your apt repository is being
+      mirrored and you want to prevent that others are sneaking in faulty
+      packages.
+     </p><p>Create a key: <span><b class="command">gpg --gen-key</b></span></p><p>You are asked a lot of questions - if unsure simply press return.
+      If you get some messages about "missing entropy" and the program seems
+      to hang - simply do something on your system -&gt; gpg is still alive!
+      But it may take some time.
+     </p><p>After you finished you can check for your new key by typing:
+      <span><b class="command">gpg --list-keys</b></span>
+     </p><p>If you want to use encrypted repositories you need to export the
+      corresponding key to your client machines. To do so type
+      (replace <span class="emphasis"><em>EMAIL</em></span> with the e-mail address you entered 
+      when creating your key pair):
+      <span><b class="command">gpg --armour --export EMAIL &gt; /tmp/public.key</b></span>
+     </p><p>Before creating the repository databases by calling
+      <span class="application">aptate</span>, make sure to change the following
+      values in your aptate.conf file:
+      (<span class="emphasis"><em>MYKEY</em></span> is shorthand for the key)
+      </p><pre class="programlisting">
+       <tt class="sgmltag-starttag">&lt;security&gt;</tt>
+        <tt class="sgmltag-starttag">&lt;hashfile_signature&gt;</tt>yes<tt class="sgmltag-endtag">&lt;/hashfile_signature&gt;</tt>
+        <tt class="sgmltag-starttag">&lt;gpg_key&gt;</tt>
+         <tt class="sgmltag-starttag">&lt;name&gt;</tt>MYKEY<tt class="sgmltag-endtag">&lt;/name&gt;</tt>
+         <tt class="sgmltag-starttag">&lt;email&gt;</tt>EMAIL<tt class="sgmltag-endtag">&lt;/email&gt;</tt>
+        <tt class="sgmltag-endtag">&lt;/gpg_key&gt;</tt>
+       <tt class="sgmltag-endtag">&lt;/security&gt;</tt>
+      </pre><p>
+     </p><p>Or use the corresponding arguments options, which are respectively:
+      --gpg-key and --gpg-key-email.
+     </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2433995"></a>Signed packages</h4></div></div><div></div></div><p>To sign RPM packages you need to tell rpm what key to use. This can
+      be done by entries in your <tt class="filename">$HOME/.rpmmacros</tt> file.
+      Replace <span class="emphasis"><em>EMAIL</em></span> in the following example with your
+      GPG key pair e-mail adress.
+      </p><pre class="programlisting">
+       %_signature gpg
+       %_gpg_name EMAIL
+      </pre><p>
+      After you did this you can use <span><b class="command">rpm --addsign *.rpm</b></span>
+      to add your signature to existing RPM files.  If you build new ones 
+      make sure to add option <i class="parameter"><tt>--sign</tt></i>.
+     </p></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2434041"></a>Client</h3></div></div><div></div></div><p>Import the repository key on the client: 
+      <span><b class="command">gpg --import  /tmp/public.key</b></span>
+     </p></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2434059"></a>Aptate configuration</h2></div></div><div></div></div><p>A short word about the configuration file of aptate, as the details
+    of the config file are explained in a seperate manual that can be found
+    here....
+    The configuration file is xml formatted.  Nothing to worry about as xml
+    formatted files
+    can still be editted with good old editors like vi, emacs, jed, etc.
+    However, it's strongly recommended to edit the config file with xemacs
+    in psgml mode.  Xemacs in this mode will be a great help for you to
+    navigate you through the dire straits of the defining the configuration
+    file.  Xemacs will be like a GUI, showing you the the values that
+    are available and it will show you the default values.  To get Xemacs in
+    psgml mode you need the pgsml module for xemacs and the configuration
+    file should have the suffix ".xml".  Other modern xml editors are
+    <span class="application">kxmleditor</span> and
+    <span class="application">mlview</span>.
+   </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2434095"></a>Usage</h2></div></div><div></div></div><p>Some usage examples:</p><p><span><b class="command">aptate --update-rpms --config my-apt4rpm.xml</b></span></p><p>In case you updated your local repository (after copying rpms
+    from CD e.g.), the following command will update your apt
+    repository, but will not download/mirror rpm packages
+   </p><p><span><b class="command">aptate --noupdate-rpms</b></span></p><p>The configuration file can be checked on correctness by calling
+    <span class="application">aptate</span> with the <i class="parameter"><tt>--check</tt></i>.
+   </p><p><span><b class="command">aptate --check --config-file /usr/tmp/apt4rpm.xml</b></span></p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2434150"></a>Automatic Package Upgrading</h2></div></div><div></div></div><p>If you're interested in ways to keep your system or systems up to
+    date automatically have a look at the scripts in the client directory.
+   </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2434163"></a>Feedback</h2></div></div><div></div></div><p>When you encounter a problem with apt, determine whether the 
+    problem is in the client - or in the server software.  In case 
+    the problem is in the server software (aptate) you may find assistance
+    at the apt4rpm mailinglists: 
+    <tt class="email">&lt;<a href="mailto:apt4rpm-devel@lists.sourceforge.net">apt4rpm-devel@lists.sourceforge.net</a>&gt;</tt> or
+    <tt class="email">&lt;<a href="mailto:apt4rpm-users@lists.sourceforge.net">apt4rpm-users@lists.sourceforge.net</a>&gt;</tt>.
+    If the problem is in the client software (apt-get/apt-cache) you may
+    find support at the apt-rpm mailinglist:
+    <tt class="email">&lt;<a href="mailto:apt-rpm@distro.conectiva.com.br">apt-rpm@distro.conectiva.com.br</a>&gt;</tt>.
+   </p><p>We hope that you enjoy using apt and are looking forward to your
+    contributions.  Being patches or promoting the use of apt with your
+    fellow linux users and towards your distributor!
+   </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2434198"></a>Client Configuration Examples</h2></div></div><div></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2434204"></a>Client</h3></div></div><div></div></div><div class="example"><a name="example-aptate.minimal.xml"></a><p class="title"><b>Example 1. Minimal aptate configuration file</b></p><pre class="programlisting">
+      
+&lt;?xml version='1.0' encoding="iso-8859-1"?&gt;
+&lt;!DOCTYPE opt SYSTEM "file:///usr/share/apt4rpm/aptate.dtd"&gt;
+
+&lt;opt&gt;
+
+ &lt;!-- all files are relative to this path --&gt;
+ &lt;topdir&gt;/dist/&lt;/topdir&gt;
+
+ &lt;!-- structure 3 uses the language tag --&gt;
+ &lt;distribution id="redhat80" structure="3"&gt;
+  &lt;name&gt;redhat&lt;/name&gt;
+  &lt;version&gt;8.0&lt;/version&gt;
+  &lt;architecture&gt;i586&lt;/architecture&gt;
+  &lt;language&gt;en&lt;/language&gt;
+
+  &lt;component&gt;
+   &lt;name&gt;base&lt;/name&gt;
+   &lt;!--
+    imagine the full path to be /dist/rh80
+    in combination with a topdir = /dist the
+    url becomes
+   --&gt;
+   &lt;url&gt;../rh80&lt;/url&gt;
+  &lt;/component&gt;
+ &lt;/distribution&gt;
+
+&lt;/opt&gt;
+
+
+
+     </pre></div><div class="example"><a name="example-aptate.xml"></a><p class="title"><b>Example 2. A possible aptate configuration file</b></p><pre class="programlisting">
+      
+&lt;?xml version='1.0' encoding="iso-8859-1"?&gt;
+&lt;!DOCTYPE opt SYSTEM "file:///usr/share/apt4rpm/aptate.dtd"&gt;
+
+&lt;!--
+   This is an example aptate configuration file.  It shows most of aptate's
+   elements and element attributes.  A nice way to create this file is by
+   using xemacs in pgsml mode.  Xemacs in this mode will be of great help,
+   as it gives you a gui to make this configuration file.  Make sure though
+   that the filename ends at ".xml"!
+
+   All possibilities are described in the manual, that can be found at:
+   file:///usr/share/doc/packages/apt4rpm/dtd-manual/dtd-manual.book.home.html
+--&gt;
+
+&lt;opt
+  security-component="yes"
+  update-rpms='yes'
+&gt;
+
+  &lt;!-- all files are relative to this path --&gt;
+  &lt;topdir&gt;/dist/okna2002&lt;/topdir&gt;
+
+  &lt;!-- Information used to sign the apt repository --&gt;
+  &lt;authorization&gt;
+    &lt;name&gt;joe&lt;/name&gt;
+    &lt;email&gt;joe@users.sourceforge.net&lt;/email&gt;
+  &lt;/authorization&gt;
+
+  &lt;!-- It's not required to specify the protocol --&gt;
+  &lt;sources-list-file&gt;/dist/okna2002/apt&lt;/sources-list-file&gt;
+  &lt;sources-list-ftp&gt;/gw/suse/suse-8.1/apt/&lt;/sources-list-ftp&gt;
+  &lt;sources-list-http&gt;http://www.okna.rm/apt&lt;/sources-list-http&gt;
+
+  &lt;distribution id="man90"&gt;
+    &lt;name&gt;Mandrake&lt;/name&gt;
+    &lt;version&gt;9.0&lt;/version&gt;
+    &lt;architecture&gt;i386&lt;/architecture&gt;
+
+    &lt;component&gt;
+     &lt;name&gt;extra&lt;/name&gt;
+      &lt;url method='file'&gt;mandrex&lt;/url&gt;
+    &lt;/component&gt;
+  &lt;/distribution&gt;
+
+  &lt;distribution id='suse73'&gt;
+    &lt;name&gt;SuSE&lt;/name&gt;
+    &lt;version&gt;7.3&lt;/version&gt;
+    &lt;architecture&gt;i386&lt;/architecture&gt;
+
+    &lt;component&gt;
+      &lt;name&gt;extra&lt;/name&gt;
+      &lt;url method='file'&gt;extra&lt;/url&gt;
+      &lt;accept&gt;i386&lt;/accept&gt;
+      &lt;reject&gt;src&lt;/reject&gt;
+    &lt;/component&gt;
+
+    &lt;component update-rpms="yes"&gt;
+      &lt;name&gt;kde&lt;/name&gt;
+      &lt;url method='ftp'&gt;ftp.gwdg.de/pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/&lt;/url&gt;
+      &lt;!-- remove the hostname and directories: pub/.....supplementary/ --&gt; 
+      &lt;wget cutdirs='7'&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/applications&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/development&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/experimental&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/internationalization&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/supplementary/KDE/update_for_7.3/source&lt;/excludedir&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;!--
+      The rpms won't be updated from this server as the attribute update-rpms
+      is missing.  This server can be used as back up server for the before
+      mentioned kde download server (ftp.gwdg.de).
+    --&gt;
+    &lt;component&gt;
+      &lt;name&gt;kde&lt;/name&gt;
+      &lt;url method='ftp'&gt;ftp.suse.com/pub/suse/i386/supplementary/KDE/update_for_7.3/base&lt;/url&gt;
+      &lt;!-- remove the hostname and directories pub/suse/i386/supplementary --&gt;
+      &lt;wget continue="no" cutdirs='4' /&gt;
+    &lt;/component&gt;
+
+    &lt;component update-rpms="yes"&gt;
+      &lt;name&gt;update&lt;/name&gt;
+      &lt;url method='ftp'&gt;ftp.gwdg.de/pub/linux/suse/ftp.suse.com/suse/i386/update/7.3&lt;/url&gt;
+      &lt;wget cutdirs='7'&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/beo1&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/doc2&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/emu1&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de1&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de2&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de3&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/k2de9&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.2.19-20011026&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.4.10-20011026&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/kernel/2.4.16-20011220&lt;/excludedir&gt;
+        &lt;excludedir&gt;pub/linux/suse/ftp.suse.com/suse/i386/update/7.3/zq1&lt;/excludedir&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;component update-rpms="yes" list-most-recent="yes"&gt;
+      &lt;name&gt;ximian&lt;/name&gt;
+      &lt;url method='ftp'&gt;ftp.ximian.com/pub/ximian-gnome/suse-73-i386&lt;/url&gt;
+      &lt;wget cutdirs='1'&gt;
+        &lt;excludedir&gt;pub/ximian-gnome/suse-73-i386/source&lt;/excludedir&gt;
+        &lt;add-arg&gt;--proxy=off --reject *-devel-*&lt;/add-arg&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;component update-rpms="yes"&gt;
+      &lt;name&gt;mozilla&lt;/name&gt;
+      &lt;url method='file'&gt;/dist/okna2002/download&lt;/url&gt;
+      &lt;!--
+         Make sure that the script stores the downloaded rpms in the 
+         location that is specified in the url.  The script can be any
+         arbitrary script, taking $topdir as 1st argument and $urldir as 
+         2nd argument (handed over to the script by aptate).  It can be
+         wrapper around wget, rsync, etc.
+      --&gt;
+      &lt;script&gt;/usr/bin/local/mirrorit&lt;/script&gt;
+    &lt;/component&gt;
+
+    &lt;component update-rpms="yes"&gt;
+      &lt;name&gt;opera&lt;/name&gt;
+      &lt;url method='ftp'&gt;sunsite.cnlab-switch.ch/mirror/opera/linux/600/&lt;/url&gt;
+      &lt;wget cutdirs='1'&gt;
+        &lt;add-arg&gt;--proxy=off --reject *.deb --reject *.bz2 --reject *.gz --reject *shared*&lt;/add-arg&gt;
+        &lt;excludedir&gt;mirror/opera/linux/600/tp3&lt;/excludedir&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+
+    &lt;component update-rpms="yes"&gt;
+      &lt;name&gt;nvidia&lt;/name&gt;
+      &lt;url method='ftp'&gt;ftp://205.158.109.140/XFree86_40&lt;/url&gt;
+      &lt;wget&gt;
+        &lt;excludedir&gt;XFree86_40/0.9-*&lt;/excludedir&gt;
+        &lt;excludedir&gt;XFree86_40/1.0-1*&lt;/excludedir&gt;
+        &lt;excludedir&gt;XFree86_40/1.0-2313&lt;/excludedir&gt;
+        &lt;excludedir&gt;XFree86_40/nforce&lt;/excludedir&gt;
+        &lt;add-arg&gt;--accept *suse73*&lt;/add-arg&gt;
+      &lt;/wget&gt;
+    &lt;/component&gt;
+  &lt;/distribution&gt;
+&lt;/opt&gt;
+
+
+
+     </pre></div><div class="example"><a name="example-sources.list"></a><p class="title"><b>Example 3. sources.list</b></p><pre class="programlisting">
+# created by aptate
+rpm     [MR]  file:/dist/apt okna/wow-i586 localrpms
+rpm     [MR]  ftp://ftp.gwdg.de/pub/apt okna/wow-i586  extra kde update x base kde3 security
+rpm-src [MR]  ftp://ftp.gwdg.de/pub/apt okna/wow-i586  extra kde update x base kde3 security
+     </pre></div><div class="example"><a name="example-vendors.list"></a><p class="title"><b>Example 4. vendors.list</b></p><pre class="programlisting">
+
+simple-key "MR"
+{
+   Fingerprint "059AB253B32F6340689E0AB2F48394E73F2B1DDC";
+   Name "Marcel Ritter &lt;Marcel.Ritter@rrze.uni-erlangen.de&gt;";
+}
+
+      </pre></div></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2495139"></a>License</h2></div><div><div class="legalnotice"><p>
+      This program is free software; you can redistribute it and/or
+      modify it under the terms of the <i class="citetitle">GNU General Public
+      License</i> as published by the Free Software Foundation;
+      either version 2 of the License, or (at your option) any later
+      version.
+     </p><p>
+      This program is distributed in the hope that it will be useful, but
+      WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      <i class="citetitle">GNU General Public License</i> for more details.
+     </p><p>
+      You may obtain a copy of the <i class="citetitle">GNU General Public License</i>
+      from the Free Software Foundation by visiting <a href="http://www.fsf.org" target="_top">their web site</a> or by writing to
+      </p><div class="address"><p><br>
+       Free Software Foundation, Inc.<br>
+       <span class="street">59 Temple Place</span> - Suite 330<br>
+       <span class="city">Boston</span>, <span class="state">MA</span> <span class="postcode">02111-1307</span><br>
+       <span class="country">USA</span><br>
+      </p></div><p>
+     </p></div></div></div><div></div></div><p></p></div></div></div></body></html>

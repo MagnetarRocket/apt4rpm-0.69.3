@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding="iso-8859-1"?>
+<!DOCTYPE opt SYSTEM "aptate.dtd">
+
+<opt>
+
+ <!-- all files are relative to this path -->
+ <topdir>/dist/</topdir>
+
+ <!-- structure 3 uses the language tag -->
+ <distribution id="redhat80" structure="3">
+  <name>redhat</name>
+  <version>8.0</version>
+  <architecture>i586</architecture>
+  <language>en</language>
+
+  <component>
+   <name>base</name>
+   <!--
+    imagine the full path to be /dist/rh80
+    in combination with a topdir = /dist the
+    url becomes
+   -->
+   <url>../rh80</url>
+  </component>
+ </distribution>
+
+</opt>
+

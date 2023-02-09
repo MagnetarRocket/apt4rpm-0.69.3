@@ -1,0 +1,504 @@
+#! @PERL@ -w
+##################################################################
+#
+# $Id: compare_rpm_version.in,v 1.12 2004/09/29 20:43:08 rbos Exp $
+#
+# A script to compare rpm versions
+#
+# Written by Richard Bos
+# Copyright (C) 2002,2003 Richard Bos
+#
+# Send suggestions to: apt4rpm-devel@lists.sourceforge.net
+# Homepage: http://apt4rpm.sourceforge.net
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# For a copy of the GNU General Public License, visit
+# http://www.gnu.org or write to the Free Software Foundation, Inc.,
+# 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+##################################################################
+
+use strict;
+use Getopt::Long;
+
+my $PROGRAM = 'compare_rpm_version';
+my $VERSION = '@PACKAGE_VERSION@';
+my $BUGS = '@PACKAGE_BUGREPORT@';
+
+sub help ()
+{
+	print <<EOF;
+Usage: $PROGRAM [options] infile
+
+Retrieve the most recent rpms from aptate's caches.
+The algorithm used to determine the most recent rpm is purely
+based on the version and release string.
+Output is a semicolon seperated list.
+
+Options:
+	--rpmtype:	bin - for binary rpms (default)
+			dlt - for delta rpms
+			pat - for patch rpms
+			src - for source rpms
+
+	--format:	Specify the output format.
+			There are 2 supported formats;
+			- long (default)
+			- compact
+			(the following 2 formats may be removed in the future)
+			- shortname
+			- path
+
+			The compact format outputs a semicolon seperated list
+			providing the rpm name, version, release, arch and size.
+			The long format provides the rpm type, name, version,
+			release, arch, size and the location (path) were the
+			rpm is stored.
+
+	--allarchs:	A comma seperated lists with package names, that need
+			to be processed for each available architecture
+			seperately.
+
+	--debug:	verbose output
+
+Report bugs to <$BUGS>
+EOF
+
+	exit 0;
+}
+
+sub version ()
+{
+	printf("%s %s\n", $PROGRAM, $VERSION);
+	exit 0;
+}
+
+my $debug;
+sub cnv_alpha {
+
+	# Characters in a version/release string are informative for humans, but
+	# they are difficult when determining the most recent version of an rpm.
+	# If characters are encountered they are replaced by an empty string ("..").
+
+	# Strings in version identifiers are used to tell that the package is
+	# a Release Candidate (rc), Pre Release (pre), alpha (a) state, etc.
+	# Examples are:
+	# - 1.0rc1
+	# - 1.0pre2
+	# - 0.6.8rc3-03
+
+	# - words.2-283(!)
+
+	# Some other information:
+	# - 2.1 is considered smaller than 2.10
+	# - 2.1 is considered equal to 2.01
+	# - 2.01.1 is newer than 2.1 (or 2.01)
+
+	# If the result of the comparison results in a status quo (the 2
+	# version/release strings are considered numerically to be same),
+	# the rpm version/release strings are compared alphanumerically.
+	# If compared alphanumerically. the strings are converted to lower case.
+	# An example: 1.11b36-2 is considered more recent than 1.11a36-2 or
+	# 1.11A36-2 (in this case the a stands for alpha and the b for beta).
+
+	# The result of this function has been compared with the application
+	# rpmver and it seems that this function does a better job :)
+
+	my $str  = shift;
+	my $type = shift;
+
+	if ($str =~ /[_[:alpha:]]/) {
+		if ($debug) {
+			printf(STDERR "DEBUG: found characters in %s string\n", $type);
+			printf(STDERR "DEBUG: %s=%s\n", $type, $str);
+		}
+		
+		$str =~ s/\.[_[:alpha:]]+\./../g;
+		if ($debug) {
+			printf(STDERR "DEBUG: filtering with: .[:alpha:]+. => %s\n", $str);
+		}
+	
+		$str =~ s/[_[:alpha:]]+\./../g;
+		if ($debug) {
+			printf(STDERR "DEBUG: filtering with:  [:alpha:]+. => %s\n", $str);
+		}
+	
+		$str =~ s/\.[_[:alpha:]]+/../g;
+		if ($debug) {
+			printf(STDERR "DEBUG: filtering with: .[:alpha:]+  => %s\n", $str);
+		}
+	
+		$str =~ s/[_[:alpha:]]+/../g;
+		if ($debug) {
+			printf(STDERR "DEBUG: filtering with:  [:alpha:]+  => %s\n", $str);
+		}
+	}
+
+	if ($debug) {
+		printf(STDERR "DEBUG: %s format after alpha filtering=%s\n", $type, $str);
+	}
+	
+	return ($str);
+}
+
+sub fill {
+
+	my $arr    = shift;
+	my $maxpos = shift;
+	my $vrtype = shift;	# vrtype can be: version or release used for printing
+	my $type   = shift;	# type can be: challenger or defender used for printing
+
+	for (my $field = @{$arr}; $field <= $maxpos; $field++) {
+		$arr->[$field] = 0;
+	}
+
+	if ( $debug ) {
+		printf(STDERR "DEBUG: new %s %s format=%s\n",
+		  $type, $vrtype, (join '.', @{$arr}))
+	}
+}
+
+sub compare {
+	my $df = shift;
+	my $ch = shift;
+	my $vrtype = shift;
+
+	my (@df, @ch);
+
+	@df = split /\./, $df;
+
+	my $tmp = cnv_alpha($ch, $vrtype);
+	@ch = split /\./, $tmp;
+
+	# Make the comparing arrays the same length/size
+	if ( $#ch > $#df ) {
+
+		fill (\@df, $#ch, $vrtype, "defender");
+
+	} else {
+
+		fill (\@ch, $#df, $vrtype, "challenger");
+	}
+
+	my $status = "equal";
+	for (my $fld = 0; $fld <= $#df; $fld++) {
+
+		# A variable may not be empty in a numerical comparison ($a > $b).
+		# A variable is empty because at the concerning location a string
+		# was located.  A string is considered smaller than "0" => make it -1.
+		if ( $ch[$fld] eq "" ) { $ch[$fld] = -1 };
+		if ( $df[$fld] eq "" ) { $df[$fld] = -1 };
+
+		if ($debug) {
+			printf(STDERR "DEBUG: matching field %s: ", $fld);
+			printf(STDERR "challenger=%s ", $ch[$fld]);
+			printf(STDERR "defender=%s => ", $df[$fld]);
+		}
+
+		if ($ch[$fld] > $df[$fld]) {
+
+			$status = "bigger";
+
+			if ($debug) {
+				printf(STDERR "bigger\n");
+			}
+			last;
+
+		} elsif ( $ch[$fld] < $df[$fld]) {
+
+			$status = "smaller";
+
+			if ($debug) {
+				printf(STDERR "smaller\n");
+			}
+			last;
+
+		} else {
+
+			if ($debug) {
+				printf(STDERR "equal\n");
+			}
+		}
+	}
+
+	return ($status, $tmp)
+}
+
+my $format = '';
+my $rpmtype = '';
+my $allarchs = '';
+Getopt::Long::config ("bundling", "pass_through");
+Getopt::Long::GetOptions (
+	'version'	=> \&version,
+	'help'		=> \&help,
+	'debug'		=> \$debug,
+	'rpmtype=s'	=> \$rpmtype,
+	'format=s'	=> \$format,
+	'allarchs=s'	=> \$allarchs,
+) or exit 1;
+
+die "$0: wrong number of arguments.\n"
+	if ( $#ARGV != 0 );
+my $infile = $ARGV[0] ;
+
+die "$0: input file missing.\n"
+	if ( not $infile );
+die "$0: input file $infile not found.\n"
+	if (not -e $infile);
+
+if ( $rpmtype eq "" ) {
+	$rpmtype = "bin"
+
+} elsif ( $rpmtype ne "bin" &&
+	  $rpmtype ne "dlt" &&
+	  $rpmtype ne "pat" &&
+	  $rpmtype ne "src" ) {
+	printf (STDERR "$0: incorrect rpm type specified\n");
+	exit 1;
+}
+
+if ( $format ne "" &&
+	  $format ne "long" && 
+	  $format ne "path" &&
+	  $format ne "compact" &&
+	  $format ne "shortname" ) {
+	printf ("$0: incorrect output format specified\n");
+	exit 1;
+}
+
+# For some applications it seems necessary that some packages must be processed
+# including their architecture.  An example is glibc.
+my @allarchs;
+if ( $allarchs ) {
+	@allarchs = split /,/, $allarchs
+}
+
+my @fld;
+my @pkg;
+my @rpm;
+my %seen;
+my %uniq;
+my $pkg;
+
+# Field positions
+my $p_type	= 0;
+my $p_file	= 1;
+my $p_name	= 2;
+my $p_vr	= 3; # version-release string
+my $p_arch	= 4;
+my $p_size	= 9;
+my $p_version	= 10;
+my $p_release	= 11;
+
+open (CACHE, "< $infile");
+while (<CACHE>) {
+	chomp;
+	@fld = split ';';
+
+	if ( $fld[$p_type] eq $rpmtype ) {
+
+		# provide seperate version and release fields
+		($fld[$p_version], $fld[$p_release]) = split /-/, $fld[$p_vr];
+		push @rpm, [@fld];
+	
+		$pkg = $fld[$p_name];
+
+		my $arch = "any";
+		foreach $allarchs (@allarchs) {
+			if ( $pkg eq $allarchs ) {
+				$arch = $fld[$p_arch]
+			}
+		}
+
+		push (@{$uniq{$pkg}}, $arch) unless $seen{$pkg, $arch}++;
+	}
+}
+
+my $dv; # Defender Version
+my $dr; # Defender Release
+my $rel;
+my $status;
+my $versn;
+my %mr; # Most Recent
+
+foreach my $rpm (sort keys %uniq) {
+
+	foreach my $arch (@{$uniq{$rpm}}) {
+
+		# use -10 to make sure that rpms with a starting string in the 
+		# release or version field are being marked bigger than 0.0
+		# An example of such rpm is words-words.2-283
+		$dv = -10;
+		$dr = -10;
+	
+		if ($debug) {
+			printf(STDERR "DEBUG: ====================\n");
+			printf(STDERR "DEBUG: package = %s\n", $rpm);
+			printf(STDERR "DEBUG: arch    = %s\n", $arch);
+		}
+
+		# Can't use perl's grep function as it fails on filenames with +'s
+		# Example of such a filename is: libsigc++-1.0.3, g++
+		for $pkg (@rpm) {
+
+			if (($pkg->[$p_name] eq $rpm ) &&
+			  ($arch eq "any" || $pkg->[$p_arch] eq $arch )) {
+
+				if ($debug) {
+					printf(STDERR "DEBUG: defender:   %s-%s\n", $dv, $dr);
+					printf(STDERR "DEBUG: challenger: %s-%s\n", 
+					  $pkg->[$p_version], $pkg->[$p_release]);
+				}
+	
+				($status, $versn) = compare ($dv, $pkg->[$p_version], "version");
+	
+				if ($status eq "bigger") {
+	
+					$dv = $versn;
+					$dr = cnv_alpha($pkg->[$p_release], "release");
+	
+					$mr{$rpm}->{$arch}->{"version"} = $pkg->[$p_version];
+					$mr{$rpm}->{$arch}->{"release"} = $pkg->[$p_release];
+					$mr{$rpm}->{$arch}->{"arch"}    = $pkg->[$p_arch];
+					$mr{$rpm}->{$arch}->{"size"}    = $pkg->[$p_size];
+					$mr{$rpm}->{$arch}->{"type"}    = $pkg->[$p_type];
+					$mr{$rpm}->{$arch}->{"file"}    = $pkg->[$p_file];
+
+					if ($debug) {
+						printf(STDERR "DEBUG: new defender version=%s-%s\n", $dv, $dr)
+					}
+	
+				} elsif ( $status eq "equal" ) {
+	
+					if ($debug) {
+						printf(STDERR "DEBUG: examining release string\n")
+					}
+	
+					($status, $rel) = compare ($dr, $pkg->[$p_release], "release");
+	
+					if ($status eq "bigger") {
+
+						$dv = $versn;
+						$dr = $rel;
+	
+						$mr{$rpm}->{$arch}->{"version"} = $pkg->[$p_version];
+						$mr{$rpm}->{$arch}->{"release"} = $pkg->[$p_release];
+						$mr{$rpm}->{$arch}->{"arch"}    = $pkg->[$p_arch];
+						$mr{$rpm}->{$arch}->{"size"}    = $pkg->[$p_size];
+						$mr{$rpm}->{$arch}->{"type"}    = $pkg->[$p_type];
+						$mr{$rpm}->{$arch}->{"file"}    = $pkg->[$p_file];
+
+						if ($debug) {
+							printf(STDERR "DEBUG: New defender version=%s-%s\n", $dv, $dr)
+						}
+				   } elsif ( $status eq "equal" ) {
+	
+						# Again equal.  Do a (lower case) alphanumerical comparison
+						my $dvr; # Defender Version Release
+						$dvr = lc $mr{$rpm}->{$arch}->{"version"}."-".$mr{$rpm}->{$arch}->{"release"};
+	
+						my $cvr; # Challenger Version Release
+						$cvr = lc $pkg->[$p_version]."-".$pkg->[$p_release];
+	
+						if ($debug) {
+							printf(STDERR "DEBUG: performing alphanumerical comparison\n");
+							printf(STDERR "DEBUG: comparing challenger: %s\n", $cvr);
+							printf(STDERR "DEBUG: with defender       : %s\n", $dvr);
+						}
+	
+						if ( $cvr gt $dvr ) {
+	
+							$dv = $versn;
+							$dr = $rel;
+	
+							$mr{$rpm}->{$arch}->{"version"} = $pkg->[$p_version];
+							$mr{$rpm}->{$arch}->{"release"} = $pkg->[$p_release];
+							$mr{$rpm}->{$arch}->{"arch"}    = $pkg->[$p_arch];
+							$mr{$rpm}->{$arch}->{"size"}    = $pkg->[$p_size];
+							$mr{$rpm}->{$arch}->{"type"}    = $pkg->[$p_type];
+							$mr{$rpm}->{$arch}->{"file"}    = $pkg->[$p_file];
+
+							if ($debug) {
+								printf(STDERR "DEBUG: New defender version=%s-%s\n", $dv, $dr)
+							}
+						}
+
+						if ($debug) {
+
+							if ( $cvr gt $dvr ) {
+								$status = "bigger";
+							} elsif ( $cvr eq $dvr ) {
+								$status = "equal";
+							} else {
+								$status = "smaller";
+							}
+
+							printf(STDERR "DEBUG: challenger is: %s\n", $status);
+						}
+					}
+				}
+	
+				if ($debug) {
+					printf(STDERR "DEBUG: --------------------\n")
+				}
+			}
+		}
+	}
+}
+
+foreach my $rpm (sort keys %mr) {
+	foreach my $arch (keys %{$mr{$rpm}}) {
+		if ($format eq "compact" ) {
+			printf("%s;%s;%s;%s;%s\n",
+			  $rpm,
+			  $mr{$rpm}->{$arch}->{"version"},
+			  $mr{$rpm}->{$arch}->{"release"},
+			  $mr{$rpm}->{$arch}->{"arch"},
+			  $mr{$rpm}->{$arch}->{"size"},
+			);
+		} elsif ($format eq "shortname" ) {
+			# legacy output format, may be removed in the future
+			printf("%s.rpm;%s-%s-%s.%s.rpm\n",
+			  $rpm,
+			  $rpm,
+			  $mr{$rpm}->{$arch}->{"version"},
+			  $mr{$rpm}->{$arch}->{"release"},
+			  $mr{$rpm}->{$arch}->{"arch"},
+			);
+		} elsif ($format eq "path" ) {
+			# legacy output format, may be removed in the future
+			printf("%s;%s-%s-%s.%s.rpm;%s;%s\n",
+			  $mr{$rpm}->{$arch}->{"type"},
+			  $rpm,
+			  $mr{$rpm}->{$arch}->{"version"},
+			  $mr{$rpm}->{$arch}->{"release"},
+			  $mr{$rpm}->{$arch}->{"arch"},
+			  $mr{$rpm}->{$arch}->{"file"},
+			  $mr{$rpm}->{$arch}->{"size"},
+			);
+		} else {
+			# format = long
+			printf("%s;%s;%s;%s;%s;%s;%s\n",
+			  $mr{$rpm}->{$arch}->{"type"},
+			  $rpm,
+			  $mr{$rpm}->{$arch}->{"version"},
+			  $mr{$rpm}->{$arch}->{"release"},
+			  $mr{$rpm}->{$arch}->{"arch"},
+			  $mr{$rpm}->{$arch}->{"size"},
+			  $mr{$rpm}->{$arch}->{"file"},
+			);
+		}
+	}
+}
+
+#vim:sts=3:sw=3
+
